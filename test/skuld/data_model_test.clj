@@ -8,26 +8,14 @@
 
 (def database-schema-file "database_schema.sql")
 
-(def test-db-spec {:classname "org.sqlite.JDBC"
-                   :subprotocol "sqlite"
-                   :subname "file::memory:?cache=shared"
-                   :foreign_keys "on"})
-
-(def test-query-conf {:connection test-db-spec
-                      :identifiers ->kebab-case})
-
 (defn reset-database-fixture [f]
-  (with-connection test-db-spec
+  (with-connection db-spec
     (doseq [sql (filter #(not (= % ""))
                         (map s/trim (s/split (slurp database-schema-file) #";")))]
-      (db/db-do-prepared test-db-spec sql))
+      (db/db-do-prepared db-spec sql))
     (f)))
 
-(defn redefs-fixture [f]
-  (with-redefs [db-spec test-db-spec
-                query-conf test-query-conf] (f)))
-
-(use-fixtures :each reset-database-fixture redefs-fixture)
+(use-fixtures :each reset-database-fixture)
 
 (deftest creating-a-group
   (let [group-id (create-group "my group name")]
@@ -55,3 +43,27 @@
                                       {:owed-by broke-user2-id
                                        :owed-to paying-user-id
                                        :amount 5.0}]))))
+
+(deftest smart-dept-calulation
+  (let [group-id (create-group "Åre")
+        user1 (create-user "user1" group-id)
+        user2 (create-user "user2" group-id)
+        user3 (create-user "user3" group-id)]
+    (add-shared-expense group-id user1 6.0)
+    (add-shared-expense group-id user2 9.0)
+    (add-shared-expense group-id user3 3.0)
+    (is (= (calculate-dept (get-group-dept group-id)) {#{1 2} {:amount 1.0
+                                                               :in-dept 1}
+                                                       #{1 3} {:amount 1.0
+                                                               :in-dept 3}
+                                                       #{2 3} {:amount 2.0
+                                                               :in-dept 3}}))))
+
+(deftest no-dept-if-equal-expenses
+  (let [group-id (create-group "Åre")
+        user1 (create-user "user1" group-id)
+        user2 (create-user "user2" group-id)]
+    (add-shared-expense group-id user1 3.0)
+    (add-shared-expense group-id user2 3.0)
+    (is (= (calculate-dept (get-group-dept group-id)) {}))))
+

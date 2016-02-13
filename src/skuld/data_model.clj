@@ -5,11 +5,12 @@
             [clj-time.format :as f]
             [clojure.java.jdbc :as db]
             [skuld.common :refer [date-format]]
-            [yesql.core :refer [defqueries]]))
+            [yesql.core :refer [defqueries]]
+            [environ.core :refer [env]]))
 
 (def db-spec {:classname "org.sqlite.JDBC"
               :subprotocol "sqlite"
-              :subname "database.sqlite"
+              :subname (env :database-url)
               :foreign_keys "on"})
 
 (def query-conf {:connection db-spec
@@ -26,6 +27,7 @@
        (apply db/insert! db-spec table
               (conj (vec rows) :entities ->snake_case))))
 
+; GROUPS
 (defn create-group [group-name]
   (let [group-id (str (java.util.UUID/randomUUID))]
     (insert! :groups {:id group-id
@@ -38,6 +40,7 @@
 (defn get-group-members [group-id]
   (get-group-members-query {:id group-id} query-conf))
 
+; USERS
 (defn create-user [username group-id]
   (first (insert! :users {:username username
                   :group-id group-id})))
@@ -45,6 +48,7 @@
 (defn get-user [id]
   (first (get-user-query {:id id} query-conf)))
 
+; EXPENSES
 (defn create-expense
   ([payed-by amount]
    (create-expense payed-by amount (t/now)))
@@ -69,14 +73,40 @@
                 (get-user-with-dept-query {:user_id user-id} query-conf))))
 
 (defn get-dept [owed-by owed-to]
-  (get (get-user-with-dept owed-by) owed-to))
+  (get (get-user-dept owed-by) owed-to))
 
 (defn get-group-dept [group-id]
   (get-group-dept-query {:group_id group-id} query-conf))
 
-(defn add-shared-expense [group-id paying-user-id amount]
-  (let [expense-id (create-expense paying-user-id amount)
-        group-members (map :id (get-group-members group-id))
-        user-dept (double (/ amount (count group-members)))]
-    (doseq [dept-user-id (remove #{paying-user-id} group-members)]
-      (create-dept dept-user-id expense-id group-id user-dept))))
+(defn rebalance-dept
+  [current-dept {:keys [owed-by owed-to amount]}]
+  (if (nil? current-dept)
+    {:amount amount
+     :in-dept owed-by}
+    (cond
+      (= (:in-dept current-dept) owed-by) (update current-dept :amount + amount)
+      (> (:amount current-dept) amount) (update current-dept :amount - amount)
+      (< (:amount current-dept) amount) (-> current-dept
+                                            (update :amount #(- amount %))
+                                            (assoc :in-dept owed-by)))))
+
+(defn calculate-dept [group-dept]
+  (loop [group-dept group-dept
+         calc-dept {}]
+    (if (empty? group-dept) calc-dept
+      (let [{:keys [owed-by owed-to amount] :as user-dept} (first group-dept)
+            user-set #{owed-by owed-to}
+            updated-dept (rebalance-dept (get calc-dept user-set) user-dept)]
+        (if (nil? updated-dept)
+          (recur (rest group-dept) (dissoc calc-dept user-set))
+          (recur (rest group-dept) (assoc calc-dept user-set updated-dept)))))))
+
+(defn add-shared-expense
+  ([group-id paying-user-id amount]
+   (add-shared-expense group-id paying-user-id amount
+                       (map :id (get-group-members group-id))))
+  ([group-id paying-user-id amount split-between]
+   (let [expense-id (create-expense paying-user-id amount)
+         user-dept (double (/ amount (count split-between)))]
+     (doseq [dept-user-id (remove #{paying-user-id} split-between)]
+       (create-dept dept-user-id expense-id group-id user-dept)))))

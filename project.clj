@@ -13,8 +13,10 @@
                  [liberator "0.13"]
                  [yesql "0.5.1"]
                  [clj-time "0.11.0"]
-                 [camel-snake-kebab "0.3.2"]]
-  :plugins [[lein-ring "0.9.7"]]
+                 [camel-snake-kebab "0.3.2"]
+                 [environ "1.0.2"]]
+  :plugins [[lein-ring "0.9.7"]
+            [lein-environ "1.0.2"]]
   :ring {:handler skuld.core/ring-handler}
   :main ^:skip-aot skuld.core
   :target-path "target/%s"
