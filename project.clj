@@ -14,10 +14,23 @@
                  [yesql "0.5.1"]
                  [clj-time "0.11.0"]
                  [camel-snake-kebab "0.3.2"]
-                 [environ "1.0.2"]]
+                 [environ "1.0.2"]
+                 [org.clojure/clojurescript "1.7.228"]
+                 [reagent "0.6.0-alpha"]]
   :plugins [[lein-ring "0.9.7"]
-            [lein-environ "1.0.2"]]
+            [lein-environ "1.0.2"]
+            [lein-figwheel "0.5.0-6"]]
   :ring {:handler skuld.core/ring-handler}
   :main ^:skip-aot skuld.core
+  :source-paths ["src/clojure"]
   :target-path "target/%s"
+  :clean-targets ^{:protect false} [:target-path "out" "resources/public/cljs/"]
+  :cljsbuild {:builds [{:id "dev"
+                        :source-paths ["src/clojurescript"]
+                        :figwheel true
+                        :compiler {:main skuld.web-gui
+                                   :asset-path "cljs/out"
+                                   :output-to "resources/public/cljs/main.js"
+                                   :output-dir "resources/public/cljs/out"}}]}
+  :figwheel {:css-dirs ["resource/public/css"]}
   :profiles {:uberjar {:aot :all}})
