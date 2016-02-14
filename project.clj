@@ -21,7 +21,8 @@
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.0.2"]
             [lein-figwheel "0.5.0-6"]
-            [lein-bower "0.5.1"]]
+            [lein-bower "0.5.1"]
+            [lein-cljsbuild "1.1.2"]]
   :ring {:handler skuld.core/ring-handler}
   :main ^:skip-aot skuld.core
   :source-paths ["src/clojure"]
@@ -34,5 +35,6 @@
                                    :asset-path "cljs/out"
                                    :output-to "resources/public/cljs/main.js"
                                    :output-dir "resources/public/cljs/out"}}]}
-  :figwheel {:css-dirs ["resource/public/css"]}
+  :figwheel {:css-dirs ["resource/public/css"]
+             :ring-handler skuld.core/ring-handler}
   :profiles {:uberjar {:aot :all}})

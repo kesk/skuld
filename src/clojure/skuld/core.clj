@@ -1,13 +1,14 @@
 (ns skuld.core
   (:require [clojure.java.jdbc :refer [insert! query]]
             [clojure.tools.logging :as log]
-            [compojure.core :refer [ANY GET defroutes]]
+            [compojure.core :as compojure :refer [ANY GET defroutes]]
             [compojure.route :as route]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.util.response :as response :refer [content-type response]]
-            [skuld.api.api-router :refer [api-handler]])
+            [skuld.api.api-router :refer [api-handler]]
+            [skuld.web-app.groups :as groups])
   (:gen-class))
 
 (def sqlite-db {:classname "org.sqlite.JDBC"
@@ -29,6 +30,7 @@
 
 (defroutes app-routes
   (GET "/" [] (response/resource-response "index.html" {:root "public"}))
+  (compojure/context "/groups" [] groups/routes)
   (ANY "/api/v1" [] api-handler)
   (route/resources "/"))
 
