@@ -16,10 +16,12 @@
                  [camel-snake-kebab "0.3.2"]
                  [environ "1.0.2"]
                  [org.clojure/clojurescript "1.7.228"]
-                 [reagent "0.6.0-alpha"]]
+                 [reagent "0.6.0-alpha"]
+                 #_[ch.qos.logback/logback-classic "1.1.1"]]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.0.2"]
-            [lein-figwheel "0.5.0-6"]]
+            [lein-figwheel "0.5.0-6"]
+            [lein-bower "0.5.1"]]
   :ring {:handler skuld.core/ring-handler}
   :main ^:skip-aot skuld.core
   :source-paths ["src/clojure"]

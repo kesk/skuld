@@ -2,10 +2,11 @@
   (:require [clojure.java.jdbc :refer [insert! query]]
             [clojure.tools.logging :as log]
             [compojure.core :refer [ANY GET defroutes]]
+            [compojure.route :as route]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.session :refer [wrap-session]]
-            [ring.util.response :refer [content-type response]]
+            [ring.util.response :as response :refer [content-type response]]
             [skuld.api.api-router :refer [api-handler]])
   (:gen-class))
 
@@ -27,8 +28,9 @@
   (query sqlite-db "select * from users"))
 
 (defroutes app-routes
-  (GET "/" [] handler)
-  (ANY "/api/v1" [] api-handler))
+  (GET "/" [] (response/resource-response "index.html" {:root "public"}))
+  (ANY "/api/v1" [] api-handler)
+  (route/resources "/"))
 
 (defn- wrap-request-logging
   [handler]
