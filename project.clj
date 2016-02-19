@@ -35,6 +35,6 @@
                                    :asset-path "cljs/out"
                                    :output-to "resources/public/cljs/main.js"
                                    :output-dir "resources/public/cljs/out"}}]}
-  :figwheel {:css-dirs ["resource/public/css"]
+  :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
   :profiles {:uberjar {:aot :all}})

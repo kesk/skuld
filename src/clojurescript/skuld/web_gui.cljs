@@ -7,7 +7,7 @@
 (defn get-element [id]
   (.getElementById js/document id))
 
-(defonce group-members (r/atom ["John" "scott"]))
+(defonce group-members (r/atom ["John" "Liza"]))
 
 (defn print-group-members [members]
   [:pre (s/join "\n" (map-indexed #(str %1 ": " %2) members))])
