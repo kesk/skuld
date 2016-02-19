@@ -12,3 +12,7 @@ pom.xml.asc
 profiles.clj
 *.log
 /resources/public/cljs
+
+# Vim temporary files
+*.swp
+*.swo
