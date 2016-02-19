@@ -34,7 +34,17 @@
                         :compiler {:main skuld.web-gui
                                    :asset-path "cljs/out"
                                    :output-to "resources/public/cljs/main.js"
-                                   :output-dir "resources/public/cljs/out"}}]}
+                                   :output-dir "resources/public/cljs/out"}}
+                       {:id "prod"
+                        :source-paths ["src/clojurescript"]
+                        :compiler {:main skuld.web-gui
+                                   :output-to "resources/public/cljs/main_prod.js"
+                                   :output-dir "resources/public/cljs/prod_out"
+                                   :optimizations :advanced
+                                   :pretty-print false
+                                   :source-map "resources/public/cljs/main_prod.js.map"
+                                   }}
+                       ]}
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
   :profiles {:uberjar {:aot :all}})
