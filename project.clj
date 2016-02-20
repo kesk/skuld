@@ -17,6 +17,7 @@
                  [environ "1.0.2"]
                  [org.clojure/clojurescript "1.7.228"]
                  [reagent "0.6.0-alpha"]
+                 [selmer "1.0.0"]
                  #_[ch.qos.logback/logback-classic "1.1.1"]]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.0.2"]

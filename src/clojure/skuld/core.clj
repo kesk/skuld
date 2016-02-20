@@ -29,7 +29,7 @@
   (query sqlite-db "select * from users"))
 
 (defroutes app-routes
-  (GET "/" [] (response/resource-response "index.html" {:root "public"}))
+  (GET "/" [] (response/resource-response "create_group.html"))
   (compojure/context "/groups" [] groups/routes)
   (ANY "/api/v1" [] api-handler)
   (route/resources "/"))
