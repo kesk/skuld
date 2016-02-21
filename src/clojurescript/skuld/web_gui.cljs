@@ -1,6 +1,7 @@
 (ns skuld.web-gui
   (:require [reagent.core :as r]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [ajax.core :refer [GET]]))
 
 (defonce value (r/atom "foo"))
 
@@ -20,6 +21,7 @@
 
 (defn- remove-nth [col n]
   (into (vec (take (dec n) col)) (drop n col)))
+
 
 (defn group-member-form []
   (into [:div]
@@ -41,7 +43,6 @@
 
 (defn create-group-form []
   [:div
-
     [:form {:action "/group" :method "post"}
      [:div {:class "form-group"}
       [:label {:for "group-name"} "Group name:"]
@@ -52,10 +53,21 @@
      [:button {:type "submit" :class "btn btn-default"} "Submit"]]
    [print-group-members @group-members]])
 
-(defn init-start []
+(defn init-start [match]
   (r/render-component [create-group-form] (get-element "app")))
+
+(defn show-group [group-id]
+  [:p (str "Nice group! " group-id)])
+
+(defn init-group [match]
+  (r/render-component [show-group (match 1)] (get-element "show-group")))
 
 ; Some routing (sort of)
 (condp re-matches (-> js/window .-location .-pathname)
-  #"/" (init-start))
+  #"/" :>> init-start
+  #"/group/(.*)" :>> init-group)
+
+(GET "/hello/sebbe"
+     {:handler #(.log js/console (str %))
+      :error #(.log js/console (str %))})
 

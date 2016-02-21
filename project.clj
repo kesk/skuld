@@ -18,6 +18,8 @@
                  [org.clojure/clojurescript "1.7.228"]
                  [reagent "0.6.0-alpha"]
                  [selmer "1.0.0"]
+                 [org.clojure/data.json "0.2.6"]
+                 [cljs-ajax "0.5.3"]
                  #_[ch.qos.logback/logback-classic "1.1.1"]]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.0.2"]
@@ -33,7 +35,7 @@
                         :source-paths ["src/clojurescript"]
                         :figwheel true
                         :compiler {:main skuld.web-gui
-                                   :asset-path "cljs/out"
+                                   :asset-path "/cljs/out"
                                    :output-to "resources/public/cljs/main.js"
                                    :output-dir "resources/public/cljs/out"}}
                        {:id "prod"
