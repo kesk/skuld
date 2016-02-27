@@ -35,7 +35,7 @@
     group-id))
 
 (defn get-group [group-id]
-  (first (get-group-query {:id group-id} query-conf)))
+  (first (get-group-query {:group_id group-id} query-conf)))
 
 (defn get-group-members [group-id]
   (get-group-members-query {:id group-id} query-conf))

@@ -34,13 +34,13 @@
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/clojurescript"]
                         :figwheel true
-                        :compiler {:main skuld.web-gui
+                        :compiler {:main skuld.core
                                    :asset-path "/cljs/out"
                                    :output-to "resources/public/cljs/main.js"
                                    :output-dir "resources/public/cljs/out"}}
                        {:id "prod"
                         :source-paths ["src/clojurescript"]
-                        :compiler {:main skuld.web-gui
+                        :compiler {:main skuld.core
                                    :output-to "resources/public/cljs/main_prod.js"
                                    :output-dir "resources/public/cljs/prod_out"
                                    :optimizations :advanced

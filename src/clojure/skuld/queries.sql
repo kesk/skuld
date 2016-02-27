@@ -4,8 +4,9 @@ JOIN users ON expenses.payed_by = users.id
 WHERE expenses.id = :id;
 
 -- name: get-group-query
-SELECT * FROM users WHERE groups.id = :group_id
-JOIN groups ON users.group_id = groups.id;
+SELECT u.id, u.username, u.group_id, g.name AS group_name FROM users AS u
+JOIN groups AS g ON u.group_id = g.id
+WHERE g.id = :group_id;
 
 -- name: get-group-members-query
 SELECT * FROM users
