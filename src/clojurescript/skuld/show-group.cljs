@@ -10,10 +10,17 @@
    [:p (str "Nice group! " group-id)]
    [:pre (str @group-info)]])
 
-(defn init [match]
-  (GET (str "/api/v1/groups/" (match 1))
-       {:handler #(reset! group-info %)
-        :error #(.log js/console %)
-        :response-format :json
-        :keywords? true})
-  (r/render-component [show-group (match 1)] (get-element "show-group")))
+(defn ^:export init []
+  (let [group-id (->> js/window
+                      .-location
+                      .-pathname
+                      (re-find #"/groups/([^/]*)")
+                      (#(% 1)))]
+    (GET (str "/api/v1/groups/" group-id)
+         {:handler #(reset! group-info %)
+          :error #(.log js/console %)
+          :response-format :json
+          :keywords? true})
+    (r/render-component [show-group group-id] (get-element "show-group"))))
+
+(init)

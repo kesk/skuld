@@ -31,13 +31,20 @@
   :source-paths ["src/clojure"]
   :target-path "target/%s"
   :clean-targets ^{:protect false} [:target-path "out" "resources/public/cljs/"]
-  :cljsbuild {:builds [{:id "dev"
+  :cljsbuild {:builds [{:id "create-group"
                         :source-paths ["src/clojurescript"]
                         :figwheel true
                         :compiler {:main skuld.core
-                                   :asset-path "/cljs/out"
-                                   :output-to "resources/public/cljs/main.js"
-                                   :output-dir "resources/public/cljs/out"}}
+                                   :asset-path "/cljs/create-group-out"
+                                   :output-to "resources/public/cljs/create-group.js"
+                                   :output-dir "resources/public/cljs/create-group-out"}}
+                       {:id "groups"
+                        :source-paths ["src/clojurescript"]
+                        :figwheel true
+                        :compiler {:main skuld.show-group
+                                   :asset-path "/cljs/groups-out"
+                                   :output-to "resources/public/cljs/groups.js"
+                                   :output-dir "resources/public/cljs/groups-out"}}
                        {:id "prod"
                         :source-paths ["src/clojurescript"]
                         :compiler {:main skuld.core
@@ -46,8 +53,7 @@
                                    :optimizations :advanced
                                    :pretty-print false
                                    :source-map "resources/public/cljs/main_prod.js.map"
-                                   }}
-                       ]}
+                                   }}]}
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
   :profiles {:uberjar {:aot :all}})
