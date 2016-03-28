@@ -9,4 +9,3 @@
   #"/" :>> create-group/init
   #"/groups/(.*)" :>> show-group/init)
 
-(.log js/console "lkjaslkdj")

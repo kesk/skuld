@@ -4,9 +4,10 @@
             [clj-time.core :as t]
             [clj-time.format :as f]
             [clojure.java.jdbc :as db]
+            [clojure.tools.logging :as log]
+            [environ.core :refer [env]]
             [skuld.common :refer [date-format]]
-            [yesql.core :refer [defqueries]]
-            [environ.core :refer [env]]))
+            [yesql.core :refer [defqueries]]))
 
 (def db-spec {:classname "org.sqlite.JDBC"
               :subprotocol "sqlite"
@@ -27,33 +28,36 @@
        (apply db/insert! db-spec table
               (conj (vec rows) :entities ->snake_case))))
 
-; GROUPS
-(defn create-group [group-name]
-  (let [group-id (str (java.util.UUID/randomUUID))]
-    (insert! :groups {:id group-id
-                      :name group-name})
-    group-id))
-
-(defn get-group [group-id]
-  (first (get-group-query {:group_id group-id} query-conf)))
-
-(defn get-group-members [group-id]
-  (get-group-members-query {:id group-id} query-conf))
-
 ; USERS
 (defn create-user [username group-id]
-  (first (insert! :users {:username username
-                  :group-id group-id})))
+  (first (insert! :users {:name username
+                          :group-id group-id})))
 
-(defn get-user [id]
-  (first (get-user-query {:id id} query-conf)))
+; GROUPS
+(defn create-group [group-name users]
+  (if (empty? users)
+    nil
+    (let [group-id (str (java.util.UUID/randomUUID))]
+      (insert! :groups {:id group-id
+                        :name group-name})
+      (doseq [username (set users)] (create-user username group-id))
+      group-id)))
+
+(defn get-group [group-id]
+  (let [result (get-group-query {:group_id group-id} query-conf)]
+    (if (empty? result)
+      nil
+      {:id group-id
+       :name (:group-name (first result))
+       :members (vec (map :name result))})))
 
 ; EXPENSES
 (defn create-expense
-  ([payed-by amount]
-   (create-expense payed-by amount (t/now)))
-  ([payed-by amount date]
+  ([group-id payed-by amount]
+   (create-expense group-id payed-by amount (t/now)))
+  ([group-id payed-by amount date]
    (first (insert! :expenses {:payed-by payed-by
+                              :group-id group-id
                               :amount amount
                               :date (str date)}))))
 
@@ -62,18 +66,20 @@
     (update expense :date #(f/parse date-format %))))
 
 ; DEPT
-(defn create-dept [user-id expense-id group-id amount]
-  (insert! :dept {:user-id user-id
+(defn create-dept [user-name expense-id group-id amount]
+  (insert! :dept {:user-name user-name
                   :expense-id expense-id
                   :group-id group-id
                   :amount amount}))
 
-(defn get-user-dept [user-id]
+(defn get-user-dept [user-name group-id]
   (into {} (map (comp vec vals)
-                (get-user-with-dept-query {:user_id user-id} query-conf))))
+                (get-user-with-dept-query {:user_name user-name
+                                           :group_id group-id}
+                                          query-conf))))
 
-(defn get-dept [owed-by owed-to]
-  (get (get-user-dept owed-by) owed-to))
+(defn get-dept [group-id owed-by owed-to]
+  (get (get-user-dept owed-by group-id) owed-to))
 
 (defn get-group-dept [group-id]
   (get-group-dept-query {:group_id group-id} query-conf))
@@ -102,11 +108,11 @@
           (recur (rest group-dept) (assoc calc-dept user-set updated-dept)))))))
 
 (defn add-shared-expense
-  ([group-id paying-user-id amount]
-   (add-shared-expense group-id paying-user-id amount
-                       (map :id (get-group-members group-id))))
-  ([group-id paying-user-id amount split-between]
-   (let [expense-id (create-expense paying-user-id amount)
+  ([group-id paying-user-name amount]
+   (add-shared-expense group-id paying-user-name amount
+                       (:members (get-group group-id))))
+  ([group-id paying-user-name amount split-between]
+   (let [expense-id (create-expense group-id paying-user-name amount)
          user-dept (double (/ amount (count split-between)))]
-     (doseq [dept-user-id (remove #{paying-user-id} split-between)]
-       (create-dept dept-user-id expense-id group-id user-dept)))))
+     (doseq [dept-user-name (remove #{paying-user-name} split-between)]
+       (create-dept dept-user-name expense-id group-id user-dept)))))

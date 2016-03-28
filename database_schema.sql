@@ -1,17 +1,17 @@
 CREATE TABLE dept (
     id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_name TEXT NOT NULL,
     group_id TEXT NOT NULL,
     expense_id INTEGER NOT NULL,
     amount REAL NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(user_name, group_id) REFERENCES users(name, group_id),
     FOREIGN KEY(group_id) REFERENCES groups(id),
     FOREIGN KEY(expense_id) REFERENCES expenses(id));
 
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
-    username TEXT NOT NULL,
+    name TEXT NOT NULL,
     group_id TEXT NOT NULL,
+    PRIMARY KEY (name, group_id),
     FOREIGN KEY(group_id) REFERENCES groups(id));
 
 CREATE TABLE groups (
@@ -20,7 +20,8 @@ CREATE TABLE groups (
 
 CREATE TABLE expenses (
     id INTEGER PRIMARY KEY,
-    payed_by INTEGER NOT NULL,
+    payed_by TEXT NOT NULL,
+    group_id TEXT NOT NULL,
     amount REAL NOT NULL,
     date TEXT NOT NULL,
-    FOREIGN KEY(payed_by) REFERENCES users(id));
+    FOREIGN KEY(payed_by, group_id) REFERENCES users(name, group_id));

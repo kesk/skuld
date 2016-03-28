@@ -14,7 +14,7 @@
   (let [group-id (->> js/window
                       .-location
                       .-pathname
-                      (re-find #"/groups/([^/]*)")
+                      (re-find #"/groups/([\d\w-]*)")
                       (#(% 1)))]
     (GET (str "/api/v1/groups/" group-id)
          {:handler #(reset! group-info %)
