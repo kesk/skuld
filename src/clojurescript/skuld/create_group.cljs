@@ -1,12 +1,13 @@
 (ns skuld.create-group
   (:require [skuld.common :refer [get-element]]
             [reagent.core :as r]
-            [clojure.string :as s] [ajax.core :refer [GET]]))
+            [clojure.string :as s]
+            [ajax.core :refer [GET]]))
 
 (defonce group-members (r/atom [""]))
 
 (defn- remove-nth [col n]
-  (into (vec (take (dec n) col)) (drop n col)))
+  (into (vec (take n col)) (drop (inc n) col)))
 
 (defn handle-event
   [state [event-name idx username]]
@@ -16,14 +17,14 @@
 (defn dispatch [event]
   (r/rswap! group-members handle-event event))
 
-(defn print-group-members [members]
-  [:pre (s/join "\n" (map-indexed #(str %1 ": " %2) members))])
+(defn print-group-members []
+  [:pre (s/join "\n" (map-indexed #(str %1 ": " %2) @group-members))])
 
 (defn on-form-name-change [idx element]
   (if (and (= (inc idx) (count @group-members))
            (not= "" (-> element .-target .-value)))
-    (swap! group-members conj ""))
-  (swap! group-members assoc idx (-> element .-target .-value)))
+    (r/rswap! group-members conj ""))
+  (r/rswap! group-members assoc idx (-> element .-target .-value)))
 
 (defn group-member-input []
   (into [:div]
@@ -43,7 +44,7 @@
                [:span {:class "glyphicon glyphicon-remove-sign"}]]]])
           @group-members)))
 
-(defn ^:export create-group-form []
+(defn create-group-form []
   [:div
    [:form {:action "/groups" :method "post"}
     [:div {:class "form-group"}
@@ -53,9 +54,6 @@
     [:p {:class "help-block"} "Input names of group members:"]
     [group-member-input group-members]
     [:button {:type "submit" :class "btn btn-default"} "Submit"]]
-   [print-group-members @group-members]])
-
-(defn ^:export init [match]
-  (r/render-component create-group-form (get-element "app")))
+   [print-group-members]])
 
 (r/render-component create-group-form (get-element "app"))

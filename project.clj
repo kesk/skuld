@@ -34,10 +34,10 @@
   :cljsbuild {:builds [{:id "create-group"
                         :source-paths ["src/clojurescript"]
                         :figwheel true
-                        :compiler {:main skuld.core
-                                   :asset-path "/cljs/create-group-out"
-                                   :output-to "resources/public/cljs/create-group.js"
-                                   :output-dir "resources/public/cljs/create-group-out"}}
+                        :compiler {:main skuld.create-group
+                                   :asset-path "/cljs/create_group_out"
+                                   :output-to "resources/public/cljs/create_group.js"
+                                   :output-dir "resources/public/cljs/create_group_out"}}
                        {:id "groups"
                         :source-paths ["src/clojurescript"]
                         :figwheel true
@@ -52,8 +52,7 @@
                                    :output-dir "resources/public/cljs/prod_out"
                                    :optimizations :advanced
                                    :pretty-print false
-                                   :source-map "resources/public/cljs/main_prod.js.map"
-                                   }}]}
+                                   :source-map "resources/public/cljs/main_prod.js.map"}}]}
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
   :profiles {:uberjar {:aot :all}})
