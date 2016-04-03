@@ -40,7 +40,7 @@
                                    :output-dir "resources/public/cljs/create_group_out"}}
                        {:id "groups"
                         :source-paths ["src/clojurescript"]
-                        :figwheel true
+                        :figwheel {:on-jsload "skuld.show-group/init"}
                         :compiler {:main skuld.show-group
                                    :asset-path "/cljs/groups-out"
                                    :output-to "resources/public/cljs/groups.js"
