@@ -25,34 +25,44 @@
             [lein-environ "1.0.2"]
             [lein-figwheel "0.5.0-6"]
             [lein-bower "0.5.1"]
-            [lein-cljsbuild "1.1.2"]]
+            [lein-cljsbuild "1.1.3"]
+            [lein-pprint "1.1.1"]]
   :ring {:handler skuld.core/ring-handler}
   :main ^:skip-aot skuld.core
   :source-paths ["src/clojure"]
   :target-path "target/%s"
   :clean-targets ^{:protect false} [:target-path "out" "resources/public/cljs/"]
-  :cljsbuild {:builds [{:id "create-group"
-                        :source-paths ["src/clojurescript"]
-                        :figwheel true
+  :hooks [leiningen.cljsbuild]
+  :cljsbuild {:builds {:create-group
+                       {:source-paths ["src/clojurescript"]
                         :compiler {:main skuld.create-group
                                    :asset-path "/cljs/create_group_out"
                                    :output-to "resources/public/cljs/create_group.js"
                                    :output-dir "resources/public/cljs/create_group_out"}}
-                       {:id "groups"
-                        :source-paths ["src/clojurescript"]
-                        :figwheel {:on-jsload "skuld.show-group/init"}
+                       :groups
+                       {:source-paths ["src/clojurescript"]
                         :compiler {:main skuld.show-group
                                    :asset-path "/cljs/groups-out"
                                    :output-to "resources/public/cljs/groups.js"
-                                   :output-dir "resources/public/cljs/groups-out"}}
-                       {:id "prod"
-                        :source-paths ["src/clojurescript"]
-                        :compiler {:main skuld.core
-                                   :output-to "resources/public/cljs/main_prod.js"
-                                   :output-dir "resources/public/cljs/prod_out"
-                                   :optimizations :advanced
-                                   :pretty-print false
-                                   :source-map "resources/public/cljs/main_prod.js.map"}}]}
+                                   :output-dir "resources/public/cljs/groups-out"}}}}
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:dev
+             {:env {:database-url "database.sqlite"}
+              :cljsbuild
+              {:builds
+               {:create-group
+                {:figwheel true
+                 :compiler {:optimizations :none}}
+                :groups
+                {:figwheel {:on-jsload "skuld.show-group/init"}
+                 :compiler {:optimizations :none}}}}}
+             :prod
+             {:cljsbuild
+              {:builds
+               {:create-group
+                {:compiler {:optimizations :advanced}}
+                :groups
+                {:compiler {:optimizations :advanced}}}}}
+             :test {:env {:database-url "file::memory:?cache=shared"}}
+             :uberjar {:aot :all}})
