@@ -32,17 +32,15 @@
   :source-paths ["src/clojure"]
   :target-path "target/%s"
   :clean-targets ^{:protect false} [:target-path "out" "resources/public/cljs/"]
-  :hooks [leiningen.cljsbuild]
+  ;:hooks [leiningen.cljsbuild]
   :cljsbuild {:builds {:create-group
                        {:source-paths ["src/clojurescript"]
-                        :compiler {:main skuld.create-group
-                                   :asset-path "/cljs/create_group_out"
+                        :compiler {:asset-path "/cljs/create_group_out"
                                    :output-to "resources/public/cljs/create_group.js"
                                    :output-dir "resources/public/cljs/create_group_out"}}
                        :groups
                        {:source-paths ["src/clojurescript"]
-                        :compiler {:main skuld.show-group
-                                   :asset-path "/cljs/groups-out"
+                        :compiler {:asset-path "/cljs/groups-out"
                                    :output-to "resources/public/cljs/groups.js"
                                    :output-dir "resources/public/cljs/groups-out"}}}}
   :figwheel {:css-dirs ["resources/public/css"]
@@ -53,10 +51,12 @@
               {:builds
                {:create-group
                 {:figwheel true
-                 :compiler {:optimizations :none}}
+                 :compiler {:main skuld.create-group
+                            :optimizations :none}}
                 :groups
                 {:figwheel {:on-jsload "skuld.show-group/init"}
-                 :compiler {:optimizations :none}}}}}
+                 :compiler {:main skuld.show-group
+                            :optimizations :none}}}}}
              :prod
              {:cljsbuild
               {:builds

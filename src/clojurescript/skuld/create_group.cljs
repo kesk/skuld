@@ -48,7 +48,7 @@
   [:div
    [:form {:action "/groups" :method "post"}
     [:div {:class "form-group"}
-     [:label {:for "group-name"} "Group name:"]
+     [:label {:for "group_name"} "Group name:"]
      [:input {:name "group_name" :type "text"
               :id "group_name" :class "form-control"}]]
     [:p {:class "help-block"} "Input names of group members:"]
