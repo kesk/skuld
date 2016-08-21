@@ -7,9 +7,9 @@
             [goog.events :as events]
             [reagent.core :as r]
             [ajax.core :refer [GET]]
-            [clojure.string :as s])
-  (:import [goog.net Jsonp]
-           [goog Uri]))
+            [clojure.string :as s]))
+
+(def log js/console.log)
 
 (extend-type js/NodeList
   ISeqable
@@ -22,9 +22,10 @@
 (defn event-handler [state [event-name value]]
   (case event-name
     :group-info (-> state
-                    (update :group-info merge value)
+                    (update :group-info merge (update value :members sort))
                     (assoc-in [:expense-form :shared-with]
-                              (into {} (map #(vec [% true]) (:members value)))))
+                              (into {} (map #(vec [% true]) (:members value))))
+                    (assoc-in [:expense-form :payed-by] (first (:members value))))
     :shared-with (update-in state [:expense-form :shared-with value] not)
     :change-amount (assoc-in state [:expense-form :amount] value)
     :change-payed-by (assoc-in state [:expense-form :payed-by] value)
@@ -51,9 +52,12 @@
 
 (def el-value #(-> % .-target .-value))
 
+(def is-float (comp not js/window.isNaN js/window.parseFloat))
+
 (defn amount-input []
   (let [amount (r/track #(-> @app-state :expense-form :amount))
-        error-class (r/track #(if (not (re-matches #"[\d,.]*" @amount)) "has-error"))
+        valid-amount #(or (empty? %1) (is-float %1))
+        error-class (r/track #(if (not (valid-amount @amount)) "has-error"))
         on-change #(dispatch [:change-amount (el-value %)])]
     (fn []
       [:div {:class (s/join " " ["form-group" @error-class])}
@@ -63,12 +67,23 @@
                 :on-change on-change
                 :value @amount}]])))
 
-(defn submit-expense-form [value]
-  (let [expense-form (@app-state :expense-form)
-        shared-with (->> (expense-form :shared-with)
-                         (filter second)
-                         (map first))]
-    (.log js/console (clj->js (assoc expense-form :shared-with shared-with)))))
+(defn prepare-formdata [data]
+  (-> data
+      (update :shared-with #(->> %
+                                 (filter (comp true? second))
+                                 (map first)))
+      (update :amount js/window.parseFloat)))
+
+(defn validate-form-data [data]
+  (and (is-float (:amount data))
+       (every? false? (map empty? (vals (select-keys data [:payed-by :shared-with]))))))
+
+(defn submit-expense-form [e]
+  (let [clj->json-str (comp js/window.JSON.stringify clj->js)
+        form-data (prepare-formdata (:expense-form @app-state))]
+    (if (validate-form-data form-data)
+      (log (clj->json-str form-data))
+      (log "Validation error"))))
 
 (defn expense-form []
   (let [members (r/track #(-> @app-state :group-info :members))
