@@ -1,7 +1,5 @@
 (ns skuld.show-group
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [skuld.common :refer [get-element]]
-            [cljs.core.async :refer [<! put! chan]]
             [cljs.pprint :refer [pprint]]
             [goog.dom :as dom]
             [goog.events :as events]
