@@ -32,17 +32,18 @@
   :source-paths ["src/clojure"]
   :target-path "target/%s"
   :clean-targets ^{:protect false} [:target-path "out" "resources/public/cljs/"]
-  ;:hooks [leiningen.cljsbuild]
-  :cljsbuild {:builds {:create-group
-                       {:source-paths ["src/clojurescript"]
-                        :compiler {:asset-path "/cljs/create_group_out"
-                                   :output-to "resources/public/cljs/create_group.js"
-                                   :output-dir "resources/public/cljs/create_group_out"}}
-                       :groups
-                       {:source-paths ["src/clojurescript"]
-                        :compiler {:asset-path "/cljs/groups-out"
-                                   :output-to "resources/public/cljs/groups.js"
-                                   :output-dir "resources/public/cljs/groups-out"}}}}
+  :hooks [leiningen.cljsbuild]
+  :cljsbuild {:builds
+              {:create-group
+               {:source-paths ["src/clojurescript"]
+                :compiler {:asset-path "/cljs/create_group_out"
+                           :output-to "resources/public/cljs/create_group.js"
+                           :output-dir "resources/public/cljs/create_group_out"}}
+               :groups
+               {:source-paths ["src/clojurescript"]
+                :compiler {:asset-path "/cljs/groups-out"
+                           :output-to "resources/public/cljs/groups.js"
+                           :output-dir "resources/public/cljs/groups_out"}}}}
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
   :profiles {:dev
@@ -51,11 +52,11 @@
               {:builds
                {:create-group
                 {:figwheel true
-                 :compiler {:main skuld.create-group
+                 :compiler {:main skuld.create-group.app
                             :optimizations :none}}
                 :groups
-                {:figwheel {:on-jsload "skuld.show-group/init"}
-                 :compiler {:main skuld.show-group
+                {:figwheel {:on-jsload "skuld.show-group.app/init"}
+                 :compiler {:main skuld.show-group.app
                             :optimizations :none}}}}}
              :prod
              {:cljsbuild

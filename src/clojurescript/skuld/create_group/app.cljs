@@ -1,4 +1,4 @@
-(ns skuld.create-group
+(ns skuld.create-group.app
   (:require [skuld.common :refer [get-element]]
             [reagent.core :as r]
             [clojure.string :as s]
@@ -56,4 +56,6 @@
     [:button {:type "submit" :class "btn btn-default"} "Submit"]]
    [print-group-members]])
 
-(r/render-component create-group-form (get-element "app"))
+(defn ^:export init []
+  (r/render create-group-form (get-element "app")))
+

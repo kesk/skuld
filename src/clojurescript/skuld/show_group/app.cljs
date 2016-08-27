@@ -1,4 +1,4 @@
-(ns skuld.show-group
+(ns skuld.show-group.app
   (:require [skuld.common :refer [get-element]]
             [cljs.pprint :refer [pprint]]
             [goog.dom :as dom]
