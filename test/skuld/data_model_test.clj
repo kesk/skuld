@@ -23,6 +23,17 @@
     (is (= (:name (get-group group-id) "my group name")))
     (is (= (:members (get-group group-id)) ["first-user"]))))
 
+(deftest list-expenses
+  (let [group-id (create-group "my group name" ["user1" "user2"])]
+    (add-shared-expense group-id "user1" 15.0)
+    (add-shared-expense group-id "user2" 20.0)
+    (add-shared-expense group-id "user2" 5.0)
+    (is (= (map #(select-keys % [:name :amount])
+                (get-group-expenses group-id))
+           [{:name "user1" :amount 15.0}
+            {:name "user2" :amount 20.0}
+            {:name "user2" :amount 5.0}]))))
+
 (deftest adding-expense-creates-dept
   (let [group-id (create-group "Trysil" ["paying" "broke1" "broke2"])]
     (add-shared-expense group-id "paying" 15.0)

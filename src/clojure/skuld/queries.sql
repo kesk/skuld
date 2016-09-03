@@ -29,3 +29,9 @@ FROM dept AS d
 JOIN expenses AS e ON d.expense_id = e.id
 WHERE d.group_id = :group_id
 GROUP BY owed_by, owed_to;
+
+-- name: get-group-expenses-query
+SELECT id, payed_by AS name, amount, date
+FROM expenses
+WHERE group_id = :group_id
+ORDER BY date ASC

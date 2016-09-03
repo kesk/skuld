@@ -12,6 +12,7 @@ pom.xml.asc
 profiles.clj
 *.log
 /resources/public/cljs
+/resources/public/vendor
 database.sqlite
 
 # Vim temporary files

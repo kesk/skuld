@@ -41,7 +41,7 @@
                            :output-dir "resources/public/cljs/create_group_out"}}
                :groups
                {:source-paths ["src/clojurescript"]
-                :compiler {:asset-path "/cljs/groups-out"
+                :compiler {:asset-path "/cljs/groups_out"
                            :output-to "resources/public/cljs/groups.js"
                            :output-dir "resources/public/cljs/groups_out"}}}}
   :figwheel {:css-dirs ["resources/public/css"]

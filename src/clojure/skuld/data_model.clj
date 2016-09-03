@@ -51,6 +51,10 @@
        :name (:group-name (first result))
        :members (vec (map :name result))})))
 
+(defn get-group-expenses [group-id]
+  (let [result (get-group-expenses-query {:group_id group-id} query-conf)]
+    result))
+
 ; EXPENSES
 (defn create-expense
   ([group-id payed-by amount]

@@ -4,7 +4,7 @@
             [goog.dom :as dom]
             [goog.events :as events]
             [reagent.core :as r]
-            [ajax.core :refer [GET]]
+            [ajax.core :refer [GET POST]]
             [clojure.string :as s]))
 
 (def log js/console.log)
@@ -76,12 +76,21 @@
   (and (is-float (:amount data))
        (every? false? (map empty? (vals (select-keys data [:payed-by :shared-with]))))))
 
+(defn log-error [{:keys [status status-text]}]
+  (log (str "Error: " status " " status-text)))
+
 (defn submit-expense-form [e]
   (let [clj->json-str (comp js/window.JSON.stringify clj->js)
         form-data (prepare-formdata (:expense-form @app-state))]
-    (if (validate-form-data form-data)
-      (log (clj->json-str form-data))
-      (log "Validation error"))))
+    (if (not (validate-form-data form-data))
+      (log "Validation error")
+      (do
+        (log (clj->json-str form-data))
+        (POST (str "/api/v1/groups/" (-> @app-state :group-info :id) "/expenses" )
+              {:params (clj->json-str form-data)
+               :format :json
+               :handler #(log "data posted")
+               :error-handler log-error})))))
 
 (defn expense-form []
   (let [members (r/track #(-> @app-state :group-info :members))
