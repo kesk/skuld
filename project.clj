@@ -65,5 +65,4 @@
                 {:compiler {:optimizations :advanced}}
                 :groups
                 {:compiler {:optimizations :advanced}}}}}
-             :test {:env {:database-url "file::memory:?cache=shared"}}
              :uberjar {:aot :all}})

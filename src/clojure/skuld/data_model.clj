@@ -17,7 +17,7 @@
 (def query-conf {:connection db-spec
                  :identifiers ->kebab-case})
 
-(defqueries "skuld/queries.sql" query-conf)
+(defqueries "skuld/queries.sql")
 
 (defn post-process [query-result]
   (transform-keys ->kebab-case query-result))

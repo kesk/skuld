@@ -8,12 +8,17 @@
 
 (def database-schema-file "database_schema.sql")
 
+(def test-db-spec (assoc db-spec :subname "file::memory:?cache=shared"))
+(def test-query-conf (assoc query-conf :connection test-db-spec))
+
 (defn reset-database-fixture [f]
-  (with-connection db-spec
-    (doseq [sql (filter #(not (= % ""))
-                        (map s/trim (s/split (slurp database-schema-file) #";")))]
-      (db/db-do-prepared db-spec sql))
-    (f)))
+  (with-redefs [db-spec test-db-spec
+                query-conf test-query-conf]
+    (with-connection db-spec
+      (doseq [sql (filter #(not (= % ""))
+                          (map s/trim (s/split (slurp database-schema-file) #";")))]
+        (db/db-do-prepared db-spec sql))
+      (f))))
 
 (use-fixtures :each reset-database-fixture)
 
