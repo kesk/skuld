@@ -7,7 +7,7 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.util.response :as response]
-            [skuld.rest-api :refer [api-routes]]
+            [skuld.rest-api :refer [api-routes api-handler]]
             [skuld.data-model :as data])
   (:gen-class))
 
@@ -23,7 +23,7 @@
   (GET "/" [] (response/resource-response "create_group.html"))
   (GET "/groups/:group-id" [group-id] (response/resource-response "groups.html"))
   (POST "/groups" [] handle-group-request)
-  (context "/api/v1" [] api-routes)
+  (context "/api/v1" [] api-handler)
   (GET "/hello/:n" [n] (str "Hello " n "!"))
   (route/resources "/"))
 

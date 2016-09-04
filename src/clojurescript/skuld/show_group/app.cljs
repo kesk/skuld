@@ -76,8 +76,8 @@
   (and (is-float (:amount data))
        (every? false? (map empty? (vals (select-keys data [:payed-by :shared-with]))))))
 
-(defn log-error [{:keys [status status-text]}]
-  (log (str "Error: " status " " status-text)))
+(defn log-error [error]
+  (log (str "Error: " error)))
 
 (defn submit-expense-form [e]
   (let [clj->json-str (comp js/window.JSON.stringify clj->js)
@@ -87,9 +87,9 @@
       (do
         (log (clj->json-str form-data))
         (POST (str "/api/v1/groups/" (-> @app-state :group-info :id) "/expenses" )
-              {:params (clj->json-str form-data)
+              {:params form-data
                :format :json
-               :handler #(log "data posted")
+               :handler #(log "data posted:" (clj->js %))
                :error-handler log-error})))))
 
 (defn expense-form []
