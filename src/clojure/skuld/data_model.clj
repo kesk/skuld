@@ -119,4 +119,5 @@
    (let [expense-id (create-expense group-id paying-user-name amount)
          user-dept (double (/ amount (count split-between)))]
      (doseq [dept-user-name (remove #{paying-user-name} split-between)]
-       (create-dept dept-user-name expense-id group-id user-dept)))))
+       (create-dept dept-user-name expense-id group-id user-dept))
+     expense-id)))
