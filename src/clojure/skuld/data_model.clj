@@ -85,31 +85,23 @@
 (defn get-dept [group-id owed-by owed-to]
   (get (get-user-dept owed-by group-id) owed-to))
 
+(defn- dept-pair [{:keys [owed-by owed-to amount]}]
+  (let [pair-dept (if (< 0 (compare owed-by owed-to)) (* -1 amount) amount)]
+    [(sorted-set owed-by owed-to) pair-dept]))
+
+(defn- merge-dept-pairs
+  "Merge dept pairs to get a sum of the dept between two users."
+  [pairs]
+  (let [f (fn [p [k v]] (update p k (fnil + 0) v))]
+    (reduce f {} pairs)))
+
 (defn get-group-dept [group-id]
-  (get-group-dept-query {:group_id group-id} query-conf))
-
-(defn rebalance-dept
-  [current-dept {:keys [owed-by owed-to amount]}]
-  (if (nil? current-dept)
-    {:amount amount
-     :in-dept owed-by}
-    (cond
-      (= (:in-dept current-dept) owed-by) (update current-dept :amount + amount)
-      (> (:amount current-dept) amount) (update current-dept :amount - amount)
-      (< (:amount current-dept) amount) (-> current-dept
-                                            (update :amount #(- amount %))
-                                            (assoc :in-dept owed-by)))))
-
-(defn calculate-dept [group-dept]
-  (loop [group-dept group-dept
-         calc-dept {}]
-    (if (empty? group-dept) calc-dept
-      (let [{:keys [owed-by owed-to amount] :as user-dept} (first group-dept)
-            user-set #{owed-by owed-to}
-            updated-dept (rebalance-dept (get calc-dept user-set) user-dept)]
-        (if (nil? updated-dept)
-          (recur (rest group-dept) (dissoc calc-dept user-set))
-          (recur (rest group-dept) (assoc calc-dept user-set updated-dept)))))))
+  (let [dept (get-group-dept-query {:group_id group-id} query-conf)]
+    (->> dept
+        (map dept-pair)
+        merge-dept-pairs
+        (filter #(not= (second %) 0.0))
+        (into {}))))
 
 (defn add-shared-expense
   ([group-id paying-user-name amount]

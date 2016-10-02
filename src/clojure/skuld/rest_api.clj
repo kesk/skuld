@@ -29,7 +29,11 @@
 (defresource dept-resource [group-id]
   :allowed-methods [:get]
   :available-media-types ["application/json" "application/clojure"]
-  :handle-ok (fn [ctx] (groups/calculate-dept (groups/get-group-dept group-id))))
+  :handle-ok (fn [ctx]
+               (let [media-type (get-in ctx [:representation :media-type])]
+                 (condp = media-type
+                   "application/json" (into [] (groups/get-group-dept group-id))
+                   (into [] (groups/get-group-dept group-id))))))
 
 (defn- hello-world [request]
   (-> (res/response "Hello, api!")
