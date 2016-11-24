@@ -24,6 +24,7 @@
                     (assoc-in [:expense-form :shared-with]
                               (into {} (map #(vec [% true]) (:members value))))
                     (assoc-in [:expense-form :payed-by] (first (:members value))))
+    :group-expenses (assoc state :group-expenses value)
     :shared-with (update-in state [:expense-form :shared-with value] not)
     :change-amount (assoc-in state [:expense-form :amount] value)
     :change-payed-by (assoc-in state [:expense-form :payed-by] value)
@@ -117,10 +118,46 @@
                                 :on-click submit-expense-form}
         "Add expense"]])))
 
+(defn tab-header [tabs]
+  (let [list-item (fn [{:keys [tab-id title active]}]
+                    [:li {:role "presentation"
+                          :class (if active "active" "")}
+                     [:a {:href (str "#" tab-id)
+                          :aria-controls tab-id
+                          :role "tab"
+                          :data-toggle "tab"}
+                      title]])]
+    (->> tabs
+         (map list-item)
+         (into [:ul {:class "nav nav-tabs" :roles "tablist"}]))))
+
+(defn tab-panes [contents]
+  (let [pane (fn [{:keys [tab-id content active]}]
+               [:div {:role "tabpanel"
+                      :class (if active "tab-pane active" "tab-pane")
+                      :id tab-id}
+                content])]
+    (->> contents
+         (map pane)
+         (into [:div {:class "tab-content"}]))))
+
+(defn tabbed []
+  (let [tabs [["home" "Home" "HOME"]
+              ["thing" "Stuff" "aslkjda sldkja lksdjlka jsdlkaj slkdjalskdj alkjsd"]]
+        tabs (->> tabs
+                  (map (partial cons false))
+                  (#(cons (cons true (rest (first %))) (rest %)))
+                  (map (partial zipmap [:active :tab-id :title :content])))]
+    [:div
+     [tab-header tabs]
+     [tab-panes tabs]]))
+
 (defn app []
   [:div
    [show-group]
-   [expense-form]])
+   [expense-form]
+   [tabbed]
+   ])
 
 (defn get-group-info []
   (GET (str "/api/v1/groups/" group-id)
@@ -129,6 +166,14 @@
         :response-format :json
         :keywords? true}))
 
+(defn get-group-expenses []
+  (GET (str "/api/v1/groups/" group-id "/expenses")
+       {:handler #(dispatch [:group-expenses %])
+        :error #(.log js/console %)
+        :response-format :json
+        :keywords? true}))
+
 (defn ^:export init []
   (get-group-info)
+  (get-group-expenses)
   (r/render [app] (get-element "app")))
