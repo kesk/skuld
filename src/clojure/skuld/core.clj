@@ -7,16 +7,19 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.util.response :as response]
-            [skuld.rest-api :refer [api-routes api-handler]]
-            [skuld.data-model :as data])
+            [skuld.data-model :as data :refer [->Database]]
+            [skuld.rest-api :refer [api-handler]])
   (:gen-class))
+
+(def db (->Database))
 
 (defn handle-group-request
   [req]
   (let [members (for [[k v] (:params req)
                       :when (and (not (s/blank? v))
                                  (re-matches #"member\d+" k))] (s/trim v))
-        group-id (data/create-group (get-in req [:params "group_name"]) members)]
+        group-id (data/create-group
+                   db (get-in req [:params "group_name"]) members)]
     (response/redirect (str "/groups/" group-id))))
 
 (defroutes app-routes

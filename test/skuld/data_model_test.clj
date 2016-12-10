@@ -21,43 +21,45 @@
 
 (use-fixtures :each reset-database-fixture)
 
+(def db (->Database))
+
 (deftest creating-a-group
-  (let [group-id (create-group "my group name" ["first-user"])]
-    (is (= (:id (get-group group-id)) group-id))
-    (is (= (:name (get-group group-id) "my group name")))
-    (is (= (:members (get-group group-id)) ["first-user"]))))
+  (let [group-id (create-group db "my group name" ["first-user"])]
+    (is (= (:id (get-group db group-id)) group-id))
+    (is (= (:name (get-group db group-id)) "my group name"))
+    (is (= (:members (get-group db group-id)) ["first-user"]))))
 
 (deftest list-expenses
-  (let [group-id (create-group "my group name" ["user1" "user2"])]
-    (add-shared-expense group-id "user1" 15.0)
-    (add-shared-expense group-id "user2" 20.0)
-    (add-shared-expense group-id "user2" 5.0)
+  (let [group-id (create-group db "my group name" ["user1" "user2"])]
+    (add-shared-expense db group-id "user1" 15.0)
+    (add-shared-expense db group-id "user2" 20.0)
+    (add-shared-expense db group-id "user2" 5.0)
     (is (= (map #(select-keys % [:name :amount])
-                (get-group-expenses group-id))
+                (get-group-expenses db group-id))
            [{:name "user1" :amount 15.0}
             {:name "user2" :amount 20.0}
             {:name "user2" :amount 5.0}]))))
 
 (deftest adding-expense-creates-dept
-  (let [group-id (create-group "Trysil" ["paying" "broke1" "broke2"])]
-    (add-shared-expense group-id "paying" 15.0)
-    (is (= (get-dept group-id "broke1" "paying") 5.0))
-    (is (= (get-dept group-id "broke2" "paying") 5.0))
-    (is (= (get-group-dept group-id) {#{"broke1" "paying"} 5.0
-                                      #{"broke2" "paying"} 5.0}))))
+  (let [group-id (create-group db "Trysil" ["paying" "broke1" "broke2"])]
+    (add-shared-expense db group-id "paying" 15.0)
+    (is (= (get-dept db group-id "broke1" "paying") 5.0))
+    (is (= (get-dept db group-id "broke2" "paying") 5.0))
+    (is (= (get-group-dept db group-id) {#{"broke1" "paying"} 5.0
+                                         #{"broke2" "paying"} 5.0}))))
 
 (deftest smart-dept-calulation
-  (let [group-id (create-group "Åre" ["user1" "user2" "user3"])]
-    (add-shared-expense group-id "user1" 6.0)
-    (add-shared-expense group-id "user2" 9.0)
-    (add-shared-expense group-id "user3" 3.0)
-    (is (= (get-group-dept group-id)
+  (let [group-id (create-group db "Åre" ["user1" "user2" "user3"])]
+    (add-shared-expense db group-id "user1" 6.0)
+    (add-shared-expense db group-id "user2" 9.0)
+    (add-shared-expense db group-id "user3" 3.0)
+    (is (= (get-group-dept db group-id)
            {#{"user1" "user2"} 1.0
             #{"user1" "user3"} -1.0
             #{"user2" "user3"} -2.0}))))
 
 (deftest no-dept-if-equal-expenses
-  (let [group-id (create-group "Åre" ["user1" "user2"])]
-    (add-shared-expense group-id "user1" 3.0)
-    (add-shared-expense group-id "user2" 3.0)
-    (is (= (get-group-dept group-id) {}))))
+  (let [group-id (create-group db "Åre" ["user1" "user2"])]
+    (add-shared-expense db group-id "user1" 3.0)
+    (add-shared-expense db group-id "user2" 3.0)
+    (is (= (get-group-dept db group-id) {}))))

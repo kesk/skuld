@@ -47,7 +47,8 @@
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
   :profiles {:dev
-             {:env {:database-url "database.sqlite"}
+             {:dependencies [[ring/ring-mock "0.3.0"]]
+              :env {:database-url "database.sqlite"}
               :cljsbuild
               {:builds
                {:create-group
