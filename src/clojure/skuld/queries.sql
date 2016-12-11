@@ -8,6 +8,9 @@ SELECT u.*, g.name AS group_name FROM users AS u
 JOIN groups AS g ON u.group_id = g.id
 WHERE u.group_id = :group_id;
 
+-- name: list-groups-query
+SELECT * FROM groups;
+
 -- name: get-user-query
 SELECT
 users.*,

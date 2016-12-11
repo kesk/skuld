@@ -27,7 +27,8 @@
   (let [group-id (create-group db "my group name" ["first-user"])]
     (is (= (:id (get-group db group-id)) group-id))
     (is (= (:name (get-group db group-id)) "my group name"))
-    (is (= (:members (get-group db group-id)) ["first-user"]))))
+    (is (= (:members (get-group db group-id)) ["first-user"]))
+    (is (= (:name (first (list-groups db))) "my group name"))))
 
 (deftest list-expenses
   (let [group-id (create-group db "my group name" ["user1" "user2"])]

@@ -32,6 +32,7 @@
   (create-user [s username group-id] "Create a user belonging to a group"))
 
 (defprotocol GroupStorage
+  (list-groups [s] "List all groups")
   (create-group [s group-name users] "Create a group with users")
   (get-group [s group-id] "Get group with group id. Returns nil if not found.")
   (get-group-expenses [s group-id] "Get a list of the groups expenses"))
@@ -55,6 +56,7 @@
                             :group-id group-id})))
 
   GroupStorage
+  (list-groups [d] (list-groups-query {} query-conf))
   (create-group [d group-name users]
     (if (empty? users)
       nil

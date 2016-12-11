@@ -1,5 +1,6 @@
 (ns skuld.create-group.app
   (:require [skuld.common :refer [get-element]]
+            [skuld.create-group.list-groups :as list-group]
             [reagent.core :as r]
             [clojure.string :as s]
             [ajax.core :refer [GET]]))
@@ -57,5 +58,6 @@
    [print-group-members]])
 
 (defn ^:export init []
-  (r/render create-group-form (get-element "app")))
+  (r/render [create-group-form] (get-element "app"))
+  (list-group/init "group-list"))
 
