@@ -52,7 +52,7 @@
               :cljsbuild
               {:builds
                {:create-group
-                {:figwheel true
+                {:figwheel {:on-jsload "skuld.create-group.app/init"}
                  :compiler {:main skuld.create-group.app
                             :optimizations :none}}
                 :groups
