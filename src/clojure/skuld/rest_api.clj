@@ -7,7 +7,7 @@
             [ring.util.response :as res]
             [skuld.data-model :as groups]))
 
-(def database (groups/->Database))
+(def database (groups/->Database groups/query-conf))
 
 (defresource groups-resource [db id]
   :available-media-types ["application/json"]

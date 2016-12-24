@@ -3,15 +3,15 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [ring/ring-core "1.4.0"]
-                 [ring/ring-jetty-adapter "1.4.0"]
-                 [org.clojure/java.jdbc "0.4.2"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [ring/ring-core "1.5.0"]
+                 [ring/ring-jetty-adapter "1.5.0"]
+                 [org.clojure/java.jdbc "0.6.1"]
                  [org.clojure/tools.logging "0.3.0"]
-                 [org.xerial/sqlite-jdbc "3.8.11.2"]
+                 [org.xerial/sqlite-jdbc "3.15.1"]
                  [compojure "1.4.0"]
                  [liberator "0.13"]
-                 [yesql "0.5.1"]
+                 [yesql "0.5.3"]
                  [clj-time "0.11.0"]
                  [camel-snake-kebab "0.3.2"]
                  [environ "1.0.2"]
@@ -22,6 +22,7 @@
                  [cljs-ajax "0.5.3"]
                  #_[ch.qos.logback/logback-classic "1.1.1"]]
   :plugins [[lein-ring "0.9.7"]
+            [lein-ancient "0.6.10"]
             [lein-environ "1.0.2"]
             [lein-figwheel "0.5.0-6"]
             [lein-bower "0.5.1"]
@@ -46,24 +47,23 @@
                            :output-dir "resources/public/cljs/groups_out"}}}}
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
-  :profiles {:dev
-             {:dependencies [[ring/ring-mock "0.3.0"]]
-              :env {:database-url "database.sqlite"}
-              :cljsbuild
-              {:builds
-               {:create-group
-                {:figwheel {:on-jsload "skuld.create-group.app/init"}
-                 :compiler {:main skuld.create-group.app
-                            :optimizations :none}}
-                :groups
-                {:figwheel {:on-jsload "skuld.show-group.app/init"}
-                 :compiler {:main skuld.show-group.app
-                            :optimizations :none}}}}}
-             :prod
-             {:cljsbuild
-              {:builds
-               {:create-group
-                {:compiler {:optimizations :advanced}}
-                :groups
-                {:compiler {:optimizations :advanced}}}}}
-             :uberjar {:aot :all}})
+
+  :profiles
+  {:dev {:dependencies [[ring/ring-mock "0.3.0"]]
+         :env {:database-url "database.sqlite"}
+         :cljsbuild
+         {:builds {:create-group
+                   {:figwheel {:on-jsload "skuld.create-group.app/init"}
+                    :compiler {:main skuld.create-group.app
+                               :optimizations :none}}
+                   :groups
+                   {:figwheel {:on-jsload "skuld.show-group.app/init"}
+                    :compiler {:main skuld.show-group.app
+                               :optimizations :none}}}}}
+   :prod {:cljsbuild
+          {:builds
+           {:create-group
+            {:compiler {:optimizations :advanced}}
+            :groups
+            {:compiler {:optimizations :advanced}}}}}
+   :uberjar {:aot :all}})

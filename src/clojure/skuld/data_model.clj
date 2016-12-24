@@ -4,7 +4,6 @@
             [clj-time.core :as t]
             [clj-time.format :as f]
             [clojure.java.jdbc :as db]
-            [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [skuld.common :refer [date-format]]
             [yesql.core :refer [defqueries]]))
@@ -23,10 +22,9 @@
   (transform-keys ->kebab-case query-result))
 
 (defn insert!
-  [table & rows]
+  [conn table & rows]
   (map (keyword "last_insert_rowid()")
-       (apply db/insert! db-spec table
-              (conj (vec rows) :entities ->snake_case))))
+       (db/insert-multi! conn table (vec rows) {:entities ->snake_case})))
 
 (defprotocol UserStorage
   (create-user [s username group-id] "Create a user belonging to a group"))
@@ -49,10 +47,11 @@
   (get-group-dept [s group-id]))
 
 (declare merge-dept-pairs mk-dept-pair)
-(defrecord Database []
+(defrecord Database [query-conf]
   UserStorage
   (create-user [d username group-id]
-    (first (insert! :users {:name username
+    (first (insert! (:connection query-conf)
+                    :users {:name username
                             :group-id group-id})))
 
   GroupStorage
@@ -61,7 +60,8 @@
     (if (empty? users)
       nil
       (let [group-id (str (java.util.UUID/randomUUID))]
-        (insert! :groups {:id group-id
+        (insert! (:connection query-conf)
+                 :groups {:id group-id
                           :name group-name})
         (doseq [username (set users)] (create-user d username group-id))
         group-id)))
@@ -83,10 +83,12 @@
     (create-expense d group-id payed-by amount (t/now)))
 
   (create-expense [d group-id payed-by amount date]
-    (first (insert! :expenses {:payed-by payed-by
-                               :group-id group-id
-                               :amount amount
-                               :date (str date)})))
+    (first (insert!
+             (:connection query-conf)
+             :expenses {:payed-by payed-by
+                        :group-id group-id
+                        :amount amount
+                        :date (str date)})))
 
   (get-expense [d id]
     (let [expense (first (get-expense-query {:id id} query-conf))]
@@ -94,7 +96,8 @@
 
   DeptStorage
   (create-dept [d user-name expense-id group-id amount]
-    (insert! :dept {:user-name user-name
+    (insert! (:connection query-conf)
+             :dept {:user-name user-name
                     :expense-id expense-id
                     :group-id group-id
                     :amount amount}))

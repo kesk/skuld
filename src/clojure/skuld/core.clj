@@ -11,7 +11,7 @@
             [skuld.rest-api :refer [api-handler]])
   (:gen-class))
 
-(def db (->Database))
+(def db (->Database data/query-conf))
 
 (defn handle-group-request
   [req]
