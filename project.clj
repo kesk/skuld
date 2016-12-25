@@ -51,6 +51,7 @@
   :profiles
   {:dev {:dependencies [[ring/ring-mock "0.3.0"]]
          :env {:database-url "database.sqlite"}
+         :ring {:auto-reload? true}
          :cljsbuild
          {:builds {:create-group
                    {:figwheel {:on-jsload "skuld.create-group.app/init"}
@@ -66,4 +67,7 @@
             {:compiler {:optimizations :advanced}}
             :groups
             {:compiler {:optimizations :advanced}}}}}
-   :uberjar {:aot :all}})
+   :uberjar {:aot :all}}
+
+  :test-selectors {:default (constantly true)
+                   :it :it})

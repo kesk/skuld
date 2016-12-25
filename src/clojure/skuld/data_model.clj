@@ -56,6 +56,7 @@
 
   GroupStorage
   (list-groups [d] (list-groups-query {} query-conf))
+
   (create-group [d group-name users]
     (if (empty? users)
       nil

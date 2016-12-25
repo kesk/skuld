@@ -1,7 +1,6 @@
 (ns skuld.rest-api
   (:require [clojure.data.json :as json]
-            [clojure.tools.logging :as log]
-            [compojure.core :refer [ANY defroutes routes]]
+            [compojure.core :refer [ANY GET routes]]
             [liberator.core :refer [defresource]]
             [liberator.dev :refer [wrap-trace]]
             [ring.util.response :as res]
@@ -46,6 +45,7 @@
 (defn api-routes
   [db]
   (routes
+    (GET "/hello" [] hello-world)
     (ANY "/groups" [] (groups-resource db nil))
     (ANY "/groups/:id" [id] (groups-resource db id))
     (ANY "/groups/:id/expenses" [id] (expenses-resourse db id))
