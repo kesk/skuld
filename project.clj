@@ -21,6 +21,7 @@
                  [selmer "1.10.3"]
                  [org.clojure/data.json "0.2.6"]
                  [cljs-ajax "0.5.8"]
+                 [ring-logger "0.7.6"]
                  #_[ch.qos.logback/logback-classic "1.1.1"]]
   :plugins [[lein-ring "0.9.7"]
             [lein-ancient "0.6.10"]

@@ -4,6 +4,7 @@
             [compojure.core :refer [GET POST context defroutes]]
             [compojure.route :as route]
             [ring.adapter.jetty :refer [run-jetty]]
+            [ring.logger :refer [wrap-with-logger]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.response :as response]
             [skuld.data-model :as data :refer [->Database]]
@@ -32,21 +33,10 @@
   (GET "/hello/:n" [n] (str "Hello " n "!"))
   (route/resources "/"))
 
-(defn- wrap-request-logging
-  [handler]
-  (fn [{:keys [request-method uri] :as req}]
-    (let [resp (handler req)]
-      (log/info
-        (name request-method)
-        (:status resp)
-        (if-let [qs (:query-string req)]
-          (str uri "?" qs) uri))
-      resp)))
-
 (def ring-handler
   (-> app-routes
     (wrap-defaults (assoc-in site-defaults [:security :anti-forgery] false))
-    wrap-request-logging))
+    wrap-with-logger))
 
 (defn -main
   [& args]
