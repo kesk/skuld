@@ -49,9 +49,9 @@
   [:div
    [:form {:action "/groups" :method "post"}
     [:div {:class "form-group"}
-     [:label {:for "group_name"} "Group name:"]
-     [:input {:name "group_name" :type "text"
-              :id "group_name" :class "form-control"}]]
+     [:label {:for "groupname"} "Group name:"]
+     [:input {:name "groupname" :type "text"
+              :id "groupname" :class "form-control"}]]
     [:p {:class "help-block"} "Input names of group members:"]
     [group-member-input group-members]
     [:button {:type "submit" :class "btn btn-default"} "Submit"]]

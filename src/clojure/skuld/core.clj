@@ -4,8 +4,7 @@
             [compojure.core :refer [GET POST context defroutes]]
             [compojure.route :as route]
             [ring.adapter.jetty :refer [run-jetty]]
-            [ring.middleware.params :refer [wrap-params]]
-            [ring.middleware.session :refer [wrap-session]]
+            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.response :as response]
             [skuld.data-model :as data :refer [->Database]]
             [skuld.rest-api :refer [api-handler]])
@@ -17,14 +16,17 @@
   [req]
   (let [members (for [[k v] (:params req)
                       :when (and (not (s/blank? v))
-                                 (re-matches #"member\d+" k))] (s/trim v))
+                                 (re-matches #"member\d+" (name k)))] (s/trim v))
         group-id (data/create-group
-                   db (get-in req [:params "group_name"]) members)]
+                   db (get-in req [:params :groupname]) members)]
     (response/redirect (str "/groups/" group-id))))
 
+(defn- html-response [filename]
+  (response/content-type (response/resource-response filename) "text/html"))
+
 (defroutes app-routes
-  (GET "/" [] (response/resource-response "create_group.html"))
-  (GET "/groups/:group-id" [group-id] (response/resource-response "groups.html"))
+  (GET "/" [] (html-response "create_group.html"))
+  (GET "/groups/:group-id" [group-id] (html-response "groups.html"))
   (POST "/groups" [] handle-group-request)
   (context "/api/v1" [] api-handler)
   (GET "/hello/:n" [n] (str "Hello " n "!"))
@@ -43,9 +45,8 @@
 
 (def ring-handler
   (-> app-routes
-      wrap-request-logging
-      wrap-params
-      wrap-session))
+    (wrap-defaults (assoc-in site-defaults [:security :anti-forgery] false))
+    wrap-request-logging))
 
 (defn -main
   [& args]
