@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{title}}</title>
+    <link href="/vendor/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <meta charset="UTF-8">
+  </head>
+
+  <body>
+    {% block content %}
+    {% endblock %}
+    <script src="/vendor/jquery/dist/jquery.min.js"></script>
+    <script src="/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
+    {% block init %}
+    {% endblock %}
+  </body>
+</html>

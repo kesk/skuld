@@ -1,12 +1,12 @@
 (ns skuld.core
   (:require [clojure.string :as s]
-            [clojure.tools.logging :as log]
             [compojure.core :refer [GET POST context defroutes]]
             [compojure.route :as route]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.logger :refer [wrap-with-logger]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.response :as response]
+            [selmer.parser :as selmer]
             [skuld.data-model :as data :refer [->Database]]
             [skuld.rest-api :refer [api-handler]])
   (:gen-class))
@@ -22,12 +22,12 @@
                    db (get-in req [:params :groupname]) members)]
     (response/redirect (str "/groups/" group-id))))
 
-(defn- html-response [filename]
-  (response/content-type (response/resource-response filename) "text/html"))
+(defn- render-template [filename title]
+  (selmer/render-file filename {:title title}))
 
 (defroutes app-routes
-  (GET "/" [] (html-response "create_group.html"))
-  (GET "/groups/:group-id" [group-id] (html-response "groups.html"))
+  (GET "/" [] (render-template "create_group.html" "Skuld"))
+  (GET "/groups/:group-id" [group-id] (render-template "groups.html" "Skuld"))
   (POST "/groups" [] handle-group-request)
   (context "/api/v1" [] api-handler)
   (GET "/hello/:n" [n] (str "Hello " n "!"))
