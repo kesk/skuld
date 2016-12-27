@@ -21,13 +21,14 @@
                  [selmer "1.10.3"]
                  [org.clojure/data.json "0.2.6"]
                  [cljs-ajax "0.5.8"]
-                 [ring-logger "0.7.6"]
-                 #_[ch.qos.logback/logback-classic "1.1.1"]]
+                 [ring-logger "0.7.6"]]
+  :bower-dependencies [[bootstrap "~3.3.7"]]
   :plugins [[lein-ring "0.10.0"]
             [lein-ancient "0.6.10"]
             [lein-environ "1.1.0"]
             [lein-figwheel "0.5.8"]
             [lein-cljsbuild "1.1.5"]
+            [lein-bower "0.5.2"]
             [lein-pprint "1.1.2"]]
   :ring {:handler skuld.core/ring-handler}
   :main ^:skip-aot skuld.core

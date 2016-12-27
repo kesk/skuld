@@ -14,6 +14,7 @@ profiles.clj
 /resources/public/cljs
 /resources/public/vendor
 database.sqlite
+node_modules
 
 # Vim temporary files
 *.swp
