@@ -71,6 +71,21 @@
             {:compiler {:optimizations :advanced}}
             :groups
             {:compiler {:optimizations :advanced}}}}}
+
+   :prod-debug {:env {:database-url "database.sqlite"}
+                :cljsbuild
+                {:builds
+                 {:create-group
+                  {:compiler {:optimizations :advanced
+                              :pretty-print true
+                              :pseudo-names true
+                              :source-map "resources/public/cljs/groups.js.map"}}
+                  :groups
+                  {:compiler {:optimizations :advanced
+                              :pretty-print true
+                              :pseudo-names true
+                              :source-map "resources/public/cljs/create_group.js.map"}}}}}
+
    :uberjar {:aot :all}}
 
   :test-selectors {:default (constantly true)
