@@ -39,12 +39,14 @@
   :cljsbuild {:builds
               {:create-group
                {:source-paths ["src/clojurescript"]
-                :compiler {:asset-path "/cljs/create_group_out"
+                :compiler {:main skuld.create-group.app
+                           :asset-path "/cljs/create_group_out"
                            :output-to "resources/public/cljs/create_group.js"
                            :output-dir "resources/public/cljs/create_group_out"}}
                :groups
                {:source-paths ["src/clojurescript"]
-                :compiler {:asset-path "/cljs/groups_out"
+                :compiler {:main skuld.show-group.app
+                           :asset-path "/cljs/groups_out"
                            :output-to "resources/public/cljs/groups.js"
                            :output-dir "resources/public/cljs/groups_out"}}}}
   :figwheel {:css-dirs ["resources/public/css"]
@@ -57,12 +59,10 @@
          :cljsbuild
          {:builds {:create-group
                    {:figwheel {:on-jsload "skuld.create-group.app/init"}
-                    :compiler {:main skuld.create-group.app
-                               :optimizations :none}}
+                    :compiler {:optimizations :none}}
                    :groups
                    {:figwheel {:on-jsload "skuld.show-group.app/init"}
-                    :compiler {:main skuld.show-group.app
-                               :optimizations :none}}}}}
+                    :compiler {:optimizations :none}}}}}
 
    :prod {:env {:database-url "database.sqlite"}
           :cljsbuild
