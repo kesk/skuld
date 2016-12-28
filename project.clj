@@ -63,7 +63,9 @@
                    {:figwheel {:on-jsload "skuld.show-group.app/init"}
                     :compiler {:main skuld.show-group.app
                                :optimizations :none}}}}}
-   :prod {:cljsbuild
+
+   :prod {:env {:database-url "database.sqlite"}
+          :cljsbuild
           {:builds
            {:create-group
             {:compiler {:optimizations :advanced}}
