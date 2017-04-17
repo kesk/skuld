@@ -15,6 +15,7 @@ profiles.clj
 /resources/public/vendor
 database.sqlite
 node_modules
+.nrepl-history
 
 # Vim temporary files
 *.swp
