@@ -2,6 +2,7 @@
   (:require [clojure.string :as s]
             [compojure.core :refer [GET POST context defroutes]]
             [compojure.route :as route]
+            [environ.core :refer [env]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.logger :refer [wrap-with-logger]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -22,12 +23,15 @@
                    db (get-in req [:params :groupname]) members)]
     (response/redirect (str "/groups/" group-id))))
 
-(defn- render-template [filename title]
-  (selmer/render-file filename {:title title}))
+(defn- render-template
+  ([filename]
+   (render-template filename "Skuld"))
+  ([filename title]
+   (selmer/render-file filename {:title title})))
 
 (defroutes app-routes
-  (GET "/" [] (render-template "create_group.html" "Skuld"))
-  (GET "/groups/:group-id" [group-id] (render-template "groups.html" "Skuld"))
+  (GET "/" [] (render-template "create_group.html"))
+  (GET "/groups/:group-id" [group-id] (render-template "groups.html"))
   (POST "/groups" [] handle-group-request)
   (context "/api/v1" [] api-handler)
   (GET "/hello/:n" [n] (str "Hello " n "!"))
@@ -35,9 +39,10 @@
 
 (def ring-handler
   (-> app-routes
-    (wrap-defaults (assoc-in site-defaults [:security :anti-forgery] false))
-    wrap-with-logger))
+      (wrap-defaults (assoc-in site-defaults [:security :anti-forgery] false))
+      wrap-with-logger))
 
 (defn -main
   [& args]
+  (if (= "dev" (:environment env)) (selmer.parser/cache-off!))
   (run-jetty ring-handler {:port 3000}))

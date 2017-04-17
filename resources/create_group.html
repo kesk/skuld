@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="jumbotron text-center">
-  <h1>Nettad</h1>
-  <p>Sidan som hjälper dig att reglera skulder</p>
+<div class="jumbotron">
+  <div class="container text-xs-center">
+    <h1>Nettad</h1>
+    <p>Sidan som hjälper dig att reglera skulder</p>
+  </div>
 </div>
 <div class="container">
-  <div class="row">
-    <div>
-      <ol class="lead">
-        <li>Skapa grupp</li>
-        <li>Lägg till utgifter</li>
-        <li>PROFIT!</li>
-      </ol>
-      <h3>Skapa en grupp</h3>
-      <div id="app"></div>
+  <div>
+    <ol class="lead">
+      <li>Skapa grupp</li>
+      <li>Lägg till utgifter</li>
+      <li>PROFIT!</li>
+    </ol>
+    <h3>Skapa en grupp</h3>
+    <div id="app"></div>
 
-      <h3>Grupper</h3>
-      <div id="group-list"></div>
-    </div>
+    <h3>Grupper</h3>
+    <div id="group-list"></div>
   </div>
 </div>
 {% endblock %}

@@ -22,7 +22,8 @@
                  [org.clojure/data.json "0.2.6"]
                  [cljs-ajax "0.5.8"]
                  [ring-logger "0.7.6"]]
-  :bower-dependencies [[bootstrap "~3.3.7"]]
+  :bower-dependencies [[bootstrap "4.0.0-alpha.5"
+                        font-awesome "4.7.0"]]
   :plugins [[lein-ring "0.10.0"]
             [lein-ancient "0.6.10"]
             [lein-environ "1.1.0"]
@@ -35,7 +36,8 @@
   :source-paths ["src/clojure"]
   :target-path "target/%s"
   :clean-targets ^{:protect false} [:target-path "out" "resources/public/cljs/"]
-  :hooks [leiningen.cljsbuild]
+  ;:hooks [leiningen.cljsbuild]
+
   :cljsbuild {:builds
               {:create-group
                {:source-paths ["src/clojurescript"]
@@ -49,12 +51,14 @@
                            :asset-path "/cljs/groups_out"
                            :output-to "resources/public/cljs/groups.js"
                            :output-dir "resources/public/cljs/groups_out"}}}}
+
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler skuld.core/ring-handler}
 
   :profiles
   {:dev {:dependencies [[ring/ring-mock "0.3.0"]]
-         :env {:database-url "database.sqlite"}
+         :env {:environment "dev"
+               :database-url "database.sqlite"}
          :ring {:auto-reload? true}
          :cljsbuild
          {:builds {:create-group
@@ -64,7 +68,8 @@
                    {:figwheel {:on-jsload "skuld.show-group.app/init"}
                     :compiler {:optimizations :none}}}}}
 
-   :prod {:env {:database-url "database.sqlite"}
+   :prod {:env {:environment "prod"
+                :database-url "database.sqlite"}
           :cljsbuild
           {:builds
            {:create-group
@@ -72,7 +77,8 @@
             :groups
             {:compiler {:optimizations :advanced}}}}}
 
-   :prod-debug {:env {:database-url "database.sqlite"}
+   :prod-debug {:env {:environment "prod"
+                      :database-url "database.sqlite"}
                 :cljsbuild
                 {:builds
                  {:create-group

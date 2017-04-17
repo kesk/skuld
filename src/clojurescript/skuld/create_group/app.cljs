@@ -42,7 +42,7 @@
               [:a {:class "input-group-addon"
                    :on-click #(if (< 1 (count @group-members))
                                 (dispatch [:remove idx]))}
-               [:span {:class "glyphicon glyphicon-remove-sign"}]]]])
+               [:span {:class "fa fa-times-circle"}]]]])
           @group-members)))
 
 (defn create-group-form []
@@ -54,7 +54,7 @@
               :id "groupname" :class "form-control"}]]
     [:p {:class "help-block"} "Input names of group members:"]
     [group-member-input group-members]
-    [:button {:type "submit" :class "btn btn-default"} "Submit"]]
+    [:button {:type "submit" :class "btn btn-primary"} "Skapa grupp"]]
    [print-group-members]])
 
 (defn ^:export init []
