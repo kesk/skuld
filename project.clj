@@ -24,11 +24,11 @@
                  [ring-logger "0.7.7"]]
   :bower-dependencies [[bootstrap "4.0.0-alpha.5"
                         font-awesome "4.7.0"]]
-  :plugins [[lein-ring "0.10.0"]
+  :plugins [[lein-ring "0.11.0"]
             [lein-ancient "0.6.10"]
             [lein-environ "1.1.0"]
-            [lein-figwheel "0.5.8"]
-            [lein-cljsbuild "1.1.5"]
+            [lein-figwheel "0.5.10"]
+            [lein-cljsbuild "1.1.6"]
             [lein-bower "0.5.2"]
             [lein-pprint "1.1.2"]]
   :ring {:handler skuld.core/ring-handler}
