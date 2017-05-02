@@ -120,7 +120,7 @@
        [:label "Shared with"]
        [:div {:class "form-group"}
         (for [[n c] @shared-with]
-          ^{:key n} [:div {:class "form-check form-check-inline"}
+          ^{:key n} [:div {:class "form-check"}
                      [:label {:class "form-check-label"}
                       [:input {:class "form-check-input"
                                :type "checkbox"
