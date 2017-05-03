@@ -40,13 +40,22 @@
        (re-find #"/groups/([\d\w-]*)")
        (#(% 1))))
 
+(defn expenses []
+  (:group-expenses @app-state))
+
+(defn total-expenses []
+  (->> @(r/track expenses)
+      (map :amount)
+      (reduce + 0)))
+
 (defn show-group []
   [:div
    [:p (str "Group id: " (-> @app-state :group-info :id))]
    [:h1 (:name @app-state)]
    [:h2 "Members"]
    [:ul (for [m (-> @app-state :group-info :members)]
-          ^{:key m} [:li m])]])
+          ^{:key m} [:li m])]
+   [:p (str "Den här gruppen har spenderat totalt " (total-expenses) " kr.")]])
 
 (defn debug-state []
   [:div
