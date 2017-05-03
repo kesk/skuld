@@ -1,5 +1,10 @@
 (ns skuld.show-group.app
+  (:require-macros [secretary.core :refer [defroute]])
+  (:import goog.History)
   (:require [skuld.common :refer [get-element]]
+            [secretary.core :as secretary]
+            [goog.events :as events]
+            [goog.history.EventType :as EventType]
             [cljs.pprint :refer [pprint]]
             [goog.dom :as dom]
             [goog.events :as events]
@@ -13,7 +18,8 @@
   ISeqable
   (-seq [array] (array-seq array 0)))
 
-(defonce app-state (r/atom {:expense-form {:payed-by ""
+(defonce app-state (r/atom {:page :home
+                            :expense-form {:payed-by ""
                                            :amount ""
                                            :shared-with {}}}))
 
@@ -56,7 +62,9 @@
      [:h2 "Members"]
      [:ul (for [m (-> @app-state :group-info :members)]
             ^{:key m} [:li m])]
-     [:p (str "Den här gruppen har spenderat totalt " total " kr.")]]))
+     [:p "Den här gruppen har spenderat totalt "
+      [:span {:class "font-weight-bold"} total] " kr."]
+     [:p>a {:href "#/expenses"} "Lista alla utgifter"]]))
 
 (defn debug-state []
   [:div
@@ -142,11 +150,14 @@
                                 :on-click submit-expense-form}
         "Add expense"]])))
 
-(defn app []
+(defn home []
   [:div
    [show-group]
    [expense-form]
    [debug-state]])
+
+(defn list-expenses []
+  [:div>h1 "Expenses"])
 
 (defn get-group-info []
   (GET (str "/api/v1/groups/" group-id)
@@ -162,7 +173,36 @@
         :response-format :json
         :keywords? true}))
 
+(defn app-routes []
+  (secretary/set-config! :prefix "#")
+
+  (defroute "/" []
+    (swap! app-state assoc :page :home))
+
+  (defroute "/expenses" []
+    (swap! app-state assoc :page :list-expenses))
+
+  (defroute "*" []
+    (swap! app-state assoc :page :not-found)))
+
+(defmulti current-page #(@app-state :page))
+(defmethod current-page :home []
+  [home])
+(defmethod current-page :list-expenses []
+  [list-expenses])
+(defmethod current-page :not-found []
+  [:p "Page not found"])
+
 (defn ^:export init []
+  (app-routes)
+  (r/render [current-page] (get-element "app"))
   (get-group-info)
-  (get-group-expenses)
-  (r/render [app] (get-element "app")))
+  (get-group-expenses))
+
+(defonce hook-browser-navigation!
+  (doto (History.)
+    (events/listen
+      EventType/NAVIGATE
+      (fn [event]
+        (secretary/dispatch! (.-token event))))
+    (.setEnabled true)))

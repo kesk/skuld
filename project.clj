@@ -21,7 +21,8 @@
                  [selmer "1.10.7"]
                  [org.clojure/data.json "0.2.6"]
                  [cljs-ajax "0.5.9"]
-                 [ring-logger "0.7.7"]]
+                 [ring-logger "0.7.7"]
+                 [secretary "1.2.3"]]
   :bower-dependencies [[bootstrap "4.0.0-alpha.5"
                         font-awesome "4.7.0"]]
   :plugins [[lein-ring "0.11.0"]
