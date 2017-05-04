@@ -63,8 +63,17 @@
         :response-format :json
         :keywords? true}))
 
+(defn- group-name []
+  (-> @app-state :group-info :name))
+
+(defn- base-page [content]
+  (let [group-name @(r/track group-name)]
+    [:div
+     [:h1 group-name]
+     [content]]))
+
 (defn ^:export init []
-  (r/render [current-page] (get-element "app"))
+  (r/render [base-page current-page] (get-element "app"))
   (get-group-info)
   (get-group-expenses))
 

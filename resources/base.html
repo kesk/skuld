@@ -9,12 +9,17 @@
   </head>
 
   <body>
-    {% block content %}
-    {% endblock %}
-    <script src="/vendor/jquery/dist/jquery.min.js"></script>
-    <script src="/vendor/tether/dist/js/tether.min.js"></script>
-    <script src="/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
-    {% block init %}
-    {% endblock %}
+  <nav class="navbar navbar-light bg-faded">
+    <div class="container">
+      <h1 class="navbar-brand mb-0">Skuld</h1>
+    </div>
+  </nav>
+  {% block content %}
+  {% endblock %}
+  <script src="/vendor/jquery/dist/jquery.min.js"></script>
+  <script src="/vendor/tether/dist/js/tether.min.js"></script>
+  <script src="/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
+  {% block init %}
+  {% endblock %}
   </body>
 </html>
