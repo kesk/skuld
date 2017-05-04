@@ -64,7 +64,6 @@
         :keywords? true}))
 
 (defn ^:export init []
-  #_(app-routes)
   (r/render [current-page] (get-element "app"))
   (get-group-info)
   (get-group-expenses))

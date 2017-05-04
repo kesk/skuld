@@ -56,7 +56,7 @@
         on-change #(dispatch! [:change-amount (el-value %)])]
     (fn []
       [:div {:class (s/join " " ["form-group" @error-class])}
-       [:label {:class "control-label" :for "amount"} "Amount"]
+       [:label {:class "control-label" :for "amount"} "Pengar"]
        [:input {:name "amount" :type "text"
                 :id "group_name" :class "form-control"
                 :on-change on-change
@@ -93,28 +93,29 @@
   (let [members (r/track #(-> @app-state :group-info :members))
         shared-with (r/track #(-> @app-state :expense-form :shared-with))]
     (fn []
-      [:div
-       [:h3 "Lägg till utgift"]
-       [:div {:class "form-group"}
-        [:label {:for "payed_by"} "Vem"]
-        [:select#payed-by {:class "form-control"
-                           :on-change #(dispatch! [:change-payed-by (el-value %)])}
-         (for [m @members] ^{:key m} [:option m])]]
-       [amount-input]
-       [:label "Shared with"]
-       [:div {:class "form-group"}
-        (for [[n c] @shared-with]
-          ^{:key n} [:div {:class "form-check"}
-                     [:label {:class "form-check-label"}
-                      [:input {:class "form-check-input"
-                               :type "checkbox"
-                               :name "shared_with"
-                               :value n
-                               :on-change #(dispatch! [:shared-with (el-value %)])
-                               :checked c}] (str " " n)]])]
-       [:button#submit-expense {:class "btn btn-primary"
-                                :on-click submit-expense-form}
-        "Add expense"]])))
+      [:div {:class "card"}
+       [:h3 {:class "card-header"} "Lägg till utgift"]
+       [:div {:class "card-block"}
+        [:div {:class "form-group"}
+         [:label {:for "payed_by"} "Vem"]
+         [:select#payed-by {:class "form-control"
+                            :on-change #(dispatch! [:change-payed-by (el-value %)])}
+          (for [m @members] ^{:key m} [:option m])]]
+        [amount-input]
+        [:label "Delad med"]
+        [:div {:class "form-group"}
+         (for [[n c] @shared-with]
+           ^{:key n} [:div {:class "form-check"}
+                      [:label {:class "form-check-label"}
+                       [:input {:class "form-check-input"
+                                :type "checkbox"
+                                :name "shared_with"
+                                :value n
+                                :on-change #(dispatch! [:shared-with (el-value %)])
+                                :checked c}] (str " " n)]])]
+        [:button#submit-expense {:class "btn btn-primary"
+                                 :on-click submit-expense-form}
+         "Add expense"]]])))
 
 (defn home []
   [:div
