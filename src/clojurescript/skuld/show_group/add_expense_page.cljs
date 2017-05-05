@@ -20,6 +20,11 @@
       (map :amount)
       (reduce + 0)))
 
+(defn current-url []
+  (let [pathname (->> js/window .-location .-pathname)
+        url-hash (->> js/window .-location .-hash)]
+    (str pathname url-hash)))
+
 (defn show-group []
   (let [total @(r/track total-expenses)]
     [:div
@@ -30,7 +35,7 @@
             ^{:key m} [:li m])]
      [:p "Den här gruppen har spenderat totalt "
       [:span {:class "font-weight-bold"} total] " kr."]
-     [:p>a {:href "#/expenses"} "Lista alla utgifter"]]))
+     [:p>a {:href (str (current-url) "/expenses")} "Lista alla utgifter"]]))
 
 (defn debug-state []
   [:div

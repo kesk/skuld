@@ -8,7 +8,7 @@
 (defn group-list []
   [:ul
    (for [group @groups] ^{:key (:id group)}
-     [:li [:a {:href (str "/groups/" (:id group))}
+     [:li [:a {:href (str "/groups#" (:id group))}
            (:name group)]])])
 
 (defn- get-group-list []

@@ -10,6 +10,21 @@
             [reagent.core :as r]
             [ajax.core :refer [GET POST]]))
 
+(defonce app-routes
+  (do
+    (secretary/set-config! :prefix "#")
+
+    (defroute "/:id" [id]
+      (dispatch! [:change-page :home])
+      (dispatch! [:change-group-id id]))
+
+    (defroute "/:id/expenses" [id]
+      (dispatch! [:change-page :list-expenses])
+      (dispatch! [:change-group-id id]))
+
+    (defroute "*" []
+      (dispatch! [:change-page :not-found]))))
+
 (defonce hook-browser-navigation!
   (doto (History.)
     (events/listen
@@ -18,28 +33,32 @@
         (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
-(defonce app-routes
+(defn- group-id []
+  (get-in @app-state [:group-info :id]))
+
+(defn- get-group-info []
+  (if-let [group-id @(r/track! group-id)]
+    (GET (str "/api/v1/groups/" group-id)
+         {:handler #(dispatch! [:group-info %])
+          :error #(.log js/console %)
+          :response-format :json
+          :keywords? true})))
+
+(defn- get-group-expenses []
+  (if-let [group-id @(r/track! group-id)]
+    (GET (str "/api/v1/groups/" group-id "/expenses")
+         {:handler #(dispatch! [:group-expenses %])
+          :error #(.log js/console %)
+          :response-format :json
+          :keywords? true})))
+
+(defonce group-info-updater
   (do
-    (secretary/set-config! :prefix "#")
-
-    (defroute "/" []
-      (swap! app-state assoc :page :home))
-
-    (defroute "/expenses" []
-      (swap! app-state assoc :page :list-expenses))
-
-    (defroute "*" []
-      (swap! app-state assoc :page :not-found))))
+    (r/track! get-group-info)
+    (r/track! get-group-expenses)))
 
 (defn list-expenses []
-  [:div>h1 "Expenses"])
-
-(def group-id
-  (->> js/window
-       .-location
-       .-pathname
-       (re-find #"/groups/([\d\w-]*)")
-       (#(% 1))))
+  [:div>h2 "Expenses"])
 
 (defmulti current-page #(@app-state :page))
 (defmethod current-page :home []
@@ -47,21 +66,9 @@
 (defmethod current-page :list-expenses []
   [list-expenses])
 (defmethod current-page :not-found []
-  [:p "Page not found"])
-
-(defn get-group-info []
-  (GET (str "/api/v1/groups/" group-id)
-       {:handler #(dispatch! [:group-info %])
-        :error #(.log js/console %)
-        :response-format :json
-        :keywords? true}))
-
-(defn get-group-expenses []
-  (GET (str "/api/v1/groups/" group-id "/expenses")
-       {:handler #(dispatch! [:group-expenses %])
-        :error #(.log js/console %)
-        :response-format :json
-        :keywords? true}))
+  [:p "Not found"])
+(defmethod current-page :default []
+  [:p "Loading"])
 
 (defn- group-name []
   (-> @app-state :group-info :name))
@@ -73,7 +80,5 @@
      [content]]))
 
 (defn ^:export init []
-  (r/render [base-page current-page] (get-element "app"))
-  (get-group-info)
-  (get-group-expenses))
+  (r/render [base-page current-page] (get-element "app")))
 

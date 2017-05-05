@@ -1,8 +1,7 @@
 (ns skuld.show-group.state
   (:require [reagent.core :as r]))
 
-(defonce app-state (r/atom {:page :home
-                            :expense-form {:payed-by ""
+(defonce app-state (r/atom {:expense-form {:payed-by ""
                                            :amount ""
                                            :shared-with {}}}))
 
@@ -17,6 +16,8 @@
     :shared-with (update-in state [:expense-form :shared-with value] not)
     :change-amount (assoc-in state [:expense-form :amount] value)
     :change-payed-by (assoc-in state [:expense-form :payed-by] value)
+    :change-page (assoc state :page value)
+    :change-group-id (assoc-in state [:group-info :id] value)
     state))
 
 (defn dispatch! [e]

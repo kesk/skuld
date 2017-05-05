@@ -31,7 +31,7 @@
 
 (defroutes app-routes
   (GET "/" [] (render-template "create_group.html"))
-  (GET "/groups/:group-id" [group-id] (render-template "groups.html"))
+  (GET "/groups" [] (render-template "groups.html"))
   (POST "/groups" [] handle-group-request)
   (context "/api/v1" [] api-handler)
   (GET "/hello/:n" [n] (str "Hello " n "!"))
