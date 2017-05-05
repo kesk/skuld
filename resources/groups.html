@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
+{% block head %}
+<link href="/css/groups_style.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<nav class="navbar navbar-light bg-faded">
-  <div class="container">
-    <h1 class="navbar-brand mb-0">Nettad</h1>
-  </div>
+<nav class="navbar fixed-top navbar-light bg-faded">
+  <h1 class="navbar-brand mb-0">Nettad</h1>
 </nav>
-<div class="container">
-  <div id="app"></div>
-</div>
+<div id="app" class="container"></div>
 {% endblock %}
 
 {% block init %}

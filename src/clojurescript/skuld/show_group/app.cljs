@@ -10,20 +10,18 @@
             [reagent.core :as r]
             [ajax.core :refer [GET POST]]))
 
-(defonce app-routes
-  (do
-    (secretary/set-config! :prefix "#")
+(secretary/set-config! :prefix "#")
 
-    (defroute "/:id" [id]
-      (dispatch! [:change-page :home])
-      (dispatch! [:change-group-id id]))
+(defroute "/:id" [id]
+  (dispatch! [:change-page :home])
+  (dispatch! [:change-group-id id]))
 
-    (defroute "/:id/expenses" [id]
-      (dispatch! [:change-page :list-expenses])
-      (dispatch! [:change-group-id id]))
+(defroute "/:id/expenses" [id]
+  (dispatch! [:change-page :list-expenses])
+  (dispatch! [:change-group-id id]))
 
-    (defroute "*" []
-      (dispatch! [:change-page :not-found]))))
+(defroute "*" []
+  (dispatch! [:change-page :not-found]))
 
 (defonce hook-browser-navigation!
   (doto (History.)
@@ -76,7 +74,7 @@
 (defn- base-page [content]
   (let [group-name @(r/track group-name)]
     [:div
-     [:h1 group-name]
+     [:h1 {:class "group-header"} group-name]
      [content]]))
 
 (defn ^:export init []

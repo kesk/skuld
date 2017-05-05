@@ -28,7 +28,6 @@
 (defn show-group []
   (let [total @(r/track total-expenses)]
     [:div
-     [:p (str "Group id: " (-> @app-state :group-info :id))]
      [:h1 (:name @app-state)]
      [:h2 "Members"]
      [:ul (for [m (-> @app-state :group-info :members)]

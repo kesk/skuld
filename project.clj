@@ -23,7 +23,7 @@
                  [cljs-ajax "0.5.9"]
                  [ring-logger "0.7.7"]
                  [secretary "1.2.3"]]
-  :bower-dependencies [[bootstrap "4.0.0-alpha.5"
+  :bower-dependencies [[bootstrap "4.0.0-alpha.6"
                         font-awesome "4.7.0"]]
   :plugins [[lein-ring "0.11.0"]
             [lein-ancient "0.6.10"]
