@@ -1,6 +1,6 @@
 (ns skuld.show-group.add-expense-page
   (:require [skuld.common :refer [get-element]]
-            [skuld.show-group.state :refer [app-state dispatch!]]
+            [skuld.show-group.state :refer [app-state dispatch!] :as state]
             [reagent.core :as r]
             [ajax.core :refer [GET POST]]
             [clojure.string :as s]
@@ -12,11 +12,8 @@
   ISeqable
   (-seq [array] (array-seq array 0)))
 
-(defn expenses []
-  (:group-expenses @app-state))
-
 (defn total-expenses []
-  (->> @(r/track expenses)
+  (->> @(r/track state/expenses)
       (map :amount)
       (reduce + 0)))
 

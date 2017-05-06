@@ -23,3 +23,5 @@
 (defn dispatch! [e]
   (r/rswap! app-state event-handler e))
 
+(defn expenses []
+  (:group-expenses @app-state))

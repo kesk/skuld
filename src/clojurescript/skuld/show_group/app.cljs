@@ -4,6 +4,7 @@
   (:require [skuld.common :refer [get-element]]
             [skuld.show-group.state :refer [app-state dispatch!]]
             [skuld.show-group.add-expense-page :refer [home]]
+            [skuld.show-group.list-expenses-page :refer [list-expenses]]
             [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as EventType]
@@ -54,9 +55,6 @@
   (do
     (r/track! get-group-info)
     (r/track! get-group-expenses)))
-
-(defn list-expenses []
-  [:div>h2 "Expenses"])
 
 (defmulti current-page #(@app-state :page))
 (defmethod current-page :home []
