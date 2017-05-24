@@ -1,0 +1,44 @@
+(ns skuld.graphql
+  (:require [camel-snake-kebab.core :refer [->kebab-case]]
+            [claro.data :as data]
+            [claro.engine :as engine]
+            [environ.core :refer [env]]
+            [manifold.deferred :as d]
+            [yesql.core :refer [defqueries]]))
+
+(def db-spec {:classname "org.sqlite.JDBC"
+              :subprotocol "sqlite"
+              :subname (env :database-url)
+              :foreign_keys "on"})
+
+(def query-conf {:connection db-spec
+                 :identifiers ->kebab-case})
+
+(defqueries "skuld/graphql.sql" query-conf)
+
+(def schema
+  "type Group { id: ID!, name: String!, members: [String!]! }
+   type QueryRoot { group(id: ID!): Group }
+   schema { query: QueryRoot }")
+
+(get-group-query {:id "351ca88f-31cd-44ea-b077-1b80e0a4cb89"})
+
+(defrecord GroupMembers [id]
+  data/Resolvable
+  (resolve! [_ _]
+    (get-group-members-query {:group_id id}))
+
+  data/Transform
+  (transform [_ members]
+    (map :name members)))
+
+(defrecord Group [id]
+  data/Resolvable
+  (resolve! [_ _]
+    (d/future
+      (-> (get-group-query {:id id})
+          (first)
+          (assoc :members (->GroupMembers id))))))
+
+(engine/run!! (->Group "351ca88f-31cd-44ea-b077-1b80e0a4cb89"))
+(engine/run! (->GroupMembers "351ca88f-31cd-44ea-b077-1b80e0a4cb89"))
