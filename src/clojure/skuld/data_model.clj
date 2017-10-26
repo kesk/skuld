@@ -6,25 +6,29 @@
             [clojure.java.jdbc :as db]
             [environ.core :refer [env]]
             [skuld.common :refer [date-format]]
-            [yesql.core :refer [defqueries]]))
+            [skuld.data.queries :as q]))
 
 (def db-spec {:classname "org.sqlite.JDBC"
               :subprotocol "sqlite"
-              :subname (env :database-url)
+              :subname (env :sqlite-database-file)
               :foreign_keys "on"})
 
 (def query-conf {:connection db-spec
                  :identifiers ->kebab-case})
 
-(defqueries "skuld/queries.sql")
-
 (defn post-process [query-result]
   (transform-keys ->kebab-case query-result))
 
-(defn insert!
+(defn- insert!
   [conn table & rows]
   (map (keyword "last_insert_rowid()")
        (db/insert-multi! conn table (vec rows) {:entities ->snake_case})))
+
+(defn- run-query [db-spec sql-params]
+  (db/query db-spec sql-params {:identifiers ->kebab-case}))
+
+(defn- long-str [& strings]
+  (clojure.string/join "\n" strings))
 
 (defprotocol UserStorage
   (create-user [s username group-id] "Create a user belonging to a group"))
@@ -55,7 +59,8 @@
                             :group-id group-id})))
 
   GroupStorage
-  (list-groups [d] (list-groups-query {} query-conf))
+  (list-groups [d]
+    (run-query (:connection query-conf) q/get-all-groups))
 
   (create-group [d group-name users]
     (if (empty? users)
@@ -68,7 +73,7 @@
         group-id)))
 
   (get-group [d group-id]
-    (let [result (get-group-query {:group_id group-id} query-conf)]
+    (let [result (run-query (:connection query-conf) (q/get-group group-id))]
       (if (empty? result)
         nil
         {:id group-id
@@ -76,7 +81,7 @@
          :members (vec (map :name result))})))
 
   (get-group-expenses [d group-id]
-    (get-group-expenses-query {:group_id group-id} query-conf))
+    (run-query (:connection query-conf) (q/get-group-expenses group-id)))
 
   ExpenseStorage
   (create-expense
@@ -92,7 +97,7 @@
                         :date (str date)})))
 
   (get-expense [d id]
-    (let [expense (first (get-expense-query {:id id} query-conf))]
+    (let [expense (first (run-query (:connection query-conf) (q/get-expense id)))]
       (update expense :date #(f/parse date-format %))))
 
   DeptStorage
@@ -105,7 +110,8 @@
 
   (get-user-dept [d user-name group-id]
     (into {} (map (comp vec vals)
-                  (get-user-with-dept-query {:user_name user-name
+                  (run-query (:connection query-conf) (q/get-user-with-dept user-name group-id))
+                  #_(get-user-with-dept-query {:user_name user-name
                                              :group_id group-id}
                                             query-conf))))
 
@@ -113,7 +119,7 @@
     (get (get-user-dept d owed-by group-id) owed-to))
 
   (get-group-dept [d group-id]
-    (let [dept (get-group-dept-query {:group_id group-id} query-conf)]
+    (let [dept (run-query (:connection query-conf) (q/get-group-dept group-id))]
       (->> dept
            (map mk-dept-pair)
            merge-dept-pairs

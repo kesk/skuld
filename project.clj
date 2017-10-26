@@ -11,7 +11,6 @@
                  [org.xerial/sqlite-jdbc "3.16.1"]
                  [compojure "1.5.2"]
                  [liberator "0.14.1"]
-                 [yesql "0.5.3"]
                  [clj-time "0.13.0"]
                  [camel-snake-kebab "0.4.0"]
                  [environ "1.1.0"]
@@ -59,7 +58,7 @@
   :profiles
   {:dev {:dependencies [[ring/ring-mock "0.3.0"]]
          :env {:environment "dev"
-               :database-url "database.sqlite"}
+               :sqlite-database-file "database.sqlite"}
          :ring {:auto-reload? true}
          :cljsbuild
          {:builds {:create-group
@@ -70,7 +69,7 @@
                     :compiler {:optimizations :none}}}}}
 
    :prod {:env {:environment "prod"
-                :database-url "database.sqlite"}
+                :sqlite-database-file "database.sqlite"}
           :cljsbuild
           {:builds
            {:create-group
@@ -79,7 +78,7 @@
             {:compiler {:optimizations :advanced}}}}}
 
    :prod-debug {:env {:environment "prod"
-                      :database-url "database.sqlite"}
+                      :sqlite-database-file "database.sqlite"}
                 :cljsbuild
                 {:builds
                  {:create-group

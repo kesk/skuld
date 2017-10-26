@@ -1,11 +1,10 @@
 (ns skuld.graphql
-  (:require [camel-snake-kebab.core :refer [->kebab-case]]
+  (:require [alumbra.core :as alumbra]
             [claro.data :as data]
+            [claro.engine :as engine]
             [environ.core :refer [env]]
             [manifold.deferred :as d]
-            [yesql.core :refer [defqueries]]
-            [alumbra.core :as alumbra]
-            [clojure.pprint :refer [pprint]]))
+            [yesql.core :refer [defqueries]]))
 
 (def db-spec {:classname "org.sqlite.JDBC"
               :subprotocol "sqlite"
@@ -82,4 +81,4 @@
 #_(engine/run!! (->GroupExpenses "351ca88f-31cd-44ea-b077-1b80e0a4cb89"))
 #_(engine/run!! (->GroupDept "351ca88f-31cd-44ea-b077-1b80e0a4cb89"))
 #_(engine/run!! (->GroupMembers "351ca88f-31cd-44ea-b077-1b80e0a4cb89"))
-#_(engine/run!! (->Expense 1))
+(engine/run!! (->Expense 1))
