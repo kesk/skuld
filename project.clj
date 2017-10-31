@@ -3,25 +3,25 @@
   :license {:name "MIT License"
             :url "https://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [ring/ring-core "1.5.1"]
-                 [ring/ring-defaults "0.2.3"]
-                 [ring/ring-jetty-adapter "1.5.1"]
-                 [org.clojure/java.jdbc "0.6.1"]
-                 [org.clojure/tools.logging "0.3.1"]
-                 [org.xerial/sqlite-jdbc "3.16.1"]
-                 [compojure "1.5.2"]
-                 [liberator "0.14.1"]
-                 [clj-time "0.13.0"]
+                 [ring/ring-core "1.6.2"]
+                 [ring/ring-defaults "0.3.1"]
+                 [ring/ring-jetty-adapter "1.6.2"]
+                 [org.clojure/java.jdbc "0.7.3"]
+                 [org.clojure/tools.logging "0.4.0"]
+                 [org.xerial/sqlite-jdbc "3.20.1"]
+                 [compojure "1.6.0"]
+                 [liberator "0.15.1"]
+                 [clj-time "0.14.0"]
                  [camel-snake-kebab "0.4.0"]
                  [environ "1.1.0"]
                  [org.clojure/clojurescript "1.9.293"]
-                 [reagent "0.6.1"]
-                 [selmer "1.10.7"]
+                 [reagent "0.7.0"]
+                 [selmer "1.11.2"]
                  [org.clojure/data.json "0.2.6"]
-                 [cljs-ajax "0.5.9"]
+                 [cljs-ajax "0.7.2"]
                  [ring-logger "0.7.7"]
                  [secretary "1.2.3"]
-                 [alumbra "0.2.2"]]
+                 [alumbra "0.2.6"]]
   :bower-dependencies [[bootstrap "4.0.0-alpha.6"
                         font-awesome "4.7.0"]]
   :plugins [[lein-ring "0.11.0"]
@@ -56,7 +56,7 @@
              :ring-handler skuld.core/ring-handler}
 
   :profiles
-  {:dev {:dependencies [[ring/ring-mock "0.3.0"]]
+  {:dev {:dependencies [[ring/ring-mock "0.3.1"]]
          :env {:environment "dev"
                :sqlite-database-file "database.sqlite"}
          :ring {:auto-reload? true}
