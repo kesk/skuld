@@ -3,28 +3,56 @@
 (defn- long-str [& strings]
   (clojure.string/join "\n" strings))
 
+(def get-all-groups ["select * from user_group"])
+
+(defn get-group [id]
+  ["SELECT * FROM user_group WHERE id = ?" id])
+
+(defn get-group-members [id]
+  ["SELECT id, name FROM user WHERE group_id = ?" id])
+
 (defn get-expense [id]
-  [(long-str
-     "SELECT * FROM expenses"
-     "JOIN users ON expenses.payed_by = users.id"
-     "WHERE expenses.id = ?")
-   id])
+  ["SELECT * FROM expense WHERE id = ?" id])
 
-(def get-all-groups ["select * from groups"])
-
-(defn get-group [group-id]
+(defn get-expense-shares [expense-id]
   [(long-str
-     "SELECT u.*, g.name AS group_name FROM users AS u"
-     "JOIN groups AS g ON u.group_id = g.id"
-     "WHERE u.group_id = ?")
+     "SELECT * FROM expense_share"
+     "WHERE expense_id = ?")
+   expense-id])
+
+(defn get-group-expenses [group-id]
+  [(long-str
+     "SELECT e.id, e.user_id, u.name, e.group_id, e.amount"
+     "FROM expense e"
+     "JOIN user u ON e.user_id = u.id"
+     "WHERE group_id = ?"
+     "ORDER BY date ASC")
+   group-id])
+
+(defn get-sum-expenses [group-id]
+  [(long-str
+     "SELECT e.user_id id, u.name name, sum(e.amount) amount"
+     "FROM expense e"
+     "JOIN user u ON e.user_id = u.id"
+     "WHERE e.group_id = ?"
+     "GROUP BY e.user_id")
+   group-id])
+
+(defn get-sum-expense-shares [group-id]
+  [(long-str
+     "SELECT es.user_id id, u.name name, sum(es.amount) amount"
+     "FROM expense_share es"
+     "JOIN user u ON es.user_id = u.id"
+     "WHERE es.group_id = ?"
+     "GROUP BY es.user_id")
    group-id])
 
 (defn get-user [id]
   [(long-str
-     "SELECT users.*, groups.name AS group_name"
-     "FROM users"
-     "JOIN groups ON users.group_id = groups.id"
-     "WHERE users.id = ?")
+     "SELECT u.*, g.name AS group_name"
+     "FROM user u"
+     "JOIN user_group g ON u.group_id = g.id"
+     "WHERE u.id = ?")
    id])
 
 (defn get-user-with-dept [username group-id]
@@ -37,18 +65,5 @@
    username group-id])
 
 (defn get-group-dept [group-id]
-  [(long-str
-     "SELECT d.user_name AS owed_by, e.payed_by AS owed_to, SUM(d.amount) AS amount"
-     "FROM dept AS d"
-     "JOIN expenses AS e ON d.expense_id = e.id"
-     "WHERE d.group_id = ?"
-     "GROUP BY owed_by, owed_to")
-   group-id])
+  ["SELECT * FROM dept WHERE group_id = ?" group-id])
 
-(defn get-group-expenses [group-id]
-  [(long-str
-     "SELECT id, payed_by AS name, amount, date"
-     "FROM expenses"
-     "WHERE group_id = ?"
-     "ORDER BY date ASC")
-   group-id])

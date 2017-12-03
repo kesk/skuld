@@ -6,60 +6,55 @@
 
 (def database-schema-file "database_schema.sql")
 
-(def test-query-conf
-  (assoc-in query-conf [:connection :subname] "file::memory:?cache=shared"))
+(def test-db-spec (assoc db-spec :subname "file::memory:?cache=shared"))
 
-(def ^:dynamic *db* (->Database test-query-conf))
+(def db (map->SQLiteDatabase test-db-spec))
 
 (defn reset-database-fixture [test-body]
-  (with-db-connection [db-spec (:connection test-query-conf)]
+  (with-db-connection [db-spec test-db-spec]
     (doseq [sql (->> (s/split (slurp database-schema-file) #";")
                      (map s/trim)
                      (remove #{""}))]
       (db-do-prepared db-spec sql))
-    (binding [*db* (assoc-in *db* [:query-conf :connection] db-spec)]
-      (test-body))))
+    (test-body)))
 
 (use-fixtures :each reset-database-fixture)
 
 (deftest ^:it creating-a-group
-  (let [group-id (create-group *db* "my group name" ["first-user"])]
-    (is (= (:id (get-group *db* group-id)) group-id))
-    (is (= (:name (get-group *db* group-id)) "my group name"))
-    (is (= (:members (get-group *db* group-id)) ["first-user"]))
-    (is (= (:name (first (list-groups *db*))) "my group name"))))
+  (let [group-id (create-group db "my group name" ["first-user"])
+        created-group (get-group db group-id)]
+    (is (= (:id created-group) group-id))
+    (is (= (:name created-group) "my group name"))
+    (is (= (map :name (:members created-group)) ["first-user"]))
+    (is (= (:name (first (list-groups db))) "my group name"))))
 
-(deftest ^:it list-expenses
-  (let [group-id (create-group *db* "my group name" ["user1" "user2"])]
-    (add-shared-expense *db* group-id "user1" 15.0)
-    (add-shared-expense *db* group-id "user2" 20.0)
-    (add-shared-expense *db* group-id "user2" 5.0)
-    (is (= (map #(select-keys % [:name :amount])
-                (get-group-expenses *db* group-id))
-           [{:name "user1" :amount 15.0}
-            {:name "user2" :amount 20.0}
-            {:name "user2" :amount 5.0}]))))
+(defn user-id-map [users]
+  (into {} (map (fn [user] [(keyword (:name user)) (:id user)]) users)))
 
-(deftest ^:it adding-expense-creates-dept
-  (let [group-id (create-group *db* "Trysil" ["paying" "broke1" "broke2"])]
-    (add-shared-expense *db* group-id "paying" 15.0)
-    (is (= (get-dept *db* group-id "broke1" "paying") 5.0))
-    (is (= (get-dept *db* group-id "broke2" "paying") 5.0))
-    (is (= (get-group-dept *db* group-id) {#{"broke1" "paying"} 5.0
-                                           #{"broke2" "paying"} 5.0}))))
-
-(deftest ^:it smart-dept-calulation
-  (let [group-id (create-group *db* "Åre" ["user1" "user2" "user3"])]
-    (add-shared-expense *db* group-id "user1" 6.0)
-    (add-shared-expense *db* group-id "user2" 9.0)
-    (add-shared-expense *db* group-id "user3" 3.0)
-    (is (= (get-group-dept *db* group-id)
-           {#{"user1" "user2"} 1.0
-            #{"user1" "user3"} -1.0
-            #{"user2" "user3"} -2.0}))))
-
-(deftest ^:it no-dept-if-equal-expenses
-  (let [group-id (create-group *db* "Åre" ["user1" "user2"])]
-    (add-shared-expense *db* group-id "user1" 3.0)
-    (add-shared-expense *db* group-id "user2" 3.0)
-    (is (= (get-group-dept *db* group-id) {}))))
+(deftest ^:it create-shared-expense
+  (let [group-id (create-group db "Group" ["user1" "user2" "user3"])
+        group (get-group db group-id)
+        users (user-id-map (:members group))
+        user1 (:user1 users)
+        user2 (:user2 users)
+        user3 (:user3 users)
+        expense-id1 (create-expense db group-id user1 [user1 user2 user3] 9.0)
+        expense-id2 (create-expense db group-id user2 [user1 user2 user3] 9.0)
+        expense (get-expense db expense-id1)
+        expense-shares (get-expense-shares db expense-id1)
+        group-dept (map #(select-keys % [:from-user :to-user :amount])
+                        (get-group-dept db group-id))]
+    (is (= (:user-id expense) user1))
+    (is (= (:amount expense) 9.0))
+    (let [es (map #(select-keys % [:user-id :amount]) expense-shares)]
+      (is (= (count es) 3))
+      (is (every? (set es) [{:user-id user1 :amount 3.0}
+                            {:user-id user2 :amount 3.0}
+                            {:user-id user3 :amount 3.0}])))
+    (is (= (count group-dept) 2))
+    (is (every? (set group-dept) [{:from-user user3
+                                   :to-user user1
+                                   :amount 3.0}
+                                  {:from-user user3
+                                   :to-user user2
+                                   :amount 3.0}]))))

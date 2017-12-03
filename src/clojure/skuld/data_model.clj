@@ -3,7 +3,7 @@
             [camel-snake-kebab.extras :refer [transform-keys]]
             [clj-time.core :as t]
             [clj-time.format :as f]
-            [clojure.java.jdbc :as db]
+            [clojure.java.jdbc :as jdbc]
             [environ.core :refer [env]]
             [skuld.common :refer [date-format]]
             [skuld.data.queries :as q]))
@@ -13,136 +13,153 @@
               :subname (env :sqlite-database-file)
               :foreign_keys "on"})
 
-(def query-conf {:connection db-spec
-                 :identifiers ->kebab-case})
-
 (defn post-process [query-result]
   (transform-keys ->kebab-case query-result))
 
-(defn- insert!
-  [conn table & rows]
-  (map (keyword "last_insert_rowid()")
-       (db/insert-multi! conn table (vec rows) {:entities ->snake_case})))
+(defprotocol Database
+  (insert! [d table rows])
+  (delete! [d table where-clause])
+  (run-query [d sql-params])
+  (with-transaction [d func]))
 
-(defn- run-query [db-spec sql-params]
-  (db/query db-spec sql-params {:identifiers ->kebab-case}))
+(defrecord SQLiteDatabase
+  [classname
+   subprotocol
+   subname
+   foreign_keys]
 
-(defn- long-str [& strings]
-  (clojure.string/join "\n" strings))
+  Database
+  (insert! [d table rows]
+    (map (keyword "last_insert_rowid()")
+         (jdbc/insert-multi! d table rows {:entities ->snake_case})))
 
-(defprotocol UserStorage
-  (create-user [s username group-id] "Create a user belonging to a group"))
+  (delete! [d table where-clause]
+    (jdbc/delete! d table where-clause {:entities ->snake_case}))
 
-(defprotocol GroupStorage
-  (list-groups [s] "List all groups")
-  (create-group [s group-name users] "Create a group with users")
-  (get-group [s group-id] "Get group with group id. Returns nil if not found.")
-  (get-group-expenses [s group-id] "Get a list of the groups expenses"))
+  (run-query [d sql-params]
+    (jdbc/query d sql-params {:identifiers ->kebab-case}))
 
-(defprotocol ExpenseStorage
-  (create-expense [s group-id payed-by amount]
-                  [s group-id payed-by amount date])
-  (get-expense [s id]))
+  (with-transaction [d func]
+    (jdbc/db-transaction* d func)))
 
-(defprotocol DeptStorage
-  (create-dept [s user-name expense-id group-id amount])
-  (get-user-dept [s user-name group-id])
-  (get-dept [s group-id owned-by owed-to])
-  (get-group-dept [s group-id]))
+;UserStorage
+(defn create-user [db username group-id]
+  (first (insert! db :user
+                  [{:name username
+                    :group-id group-id}])))
 
-(declare merge-dept-pairs mk-dept-pair)
-(defrecord Database [query-conf]
-  UserStorage
-  (create-user [d username group-id]
-    (first (insert! (:connection query-conf)
-                    :users {:name username
-                            :group-id group-id})))
+;GroupStorage
+(defn list-groups [db]
+  (run-query db q/get-all-groups))
 
-  GroupStorage
-  (list-groups [d]
-    (run-query (:connection query-conf) q/get-all-groups))
+(defn create-group [db group-name users]
+  (if (empty? users)
+    nil
+    (let [group-id (str (java.util.UUID/randomUUID))]
+      (insert! db :user-group
+               [{:id group-id
+                 :name group-name}])
+      (doseq [username (set users)] (create-user db username group-id))
+      group-id)))
 
-  (create-group [d group-name users]
-    (if (empty? users)
+(defn get-group [db id]
+  (let [group (first (run-query db (q/get-group id)))
+        members (run-query db (q/get-group-members id))]
+    (if (nil? group)
       nil
-      (let [group-id (str (java.util.UUID/randomUUID))]
-        (insert! (:connection query-conf)
-                 :groups {:id group-id
-                          :name group-name})
-        (doseq [username (set users)] (create-user d username group-id))
-        group-id)))
+      {:id (:id group)
+       :name (:name group)
+       :members members})))
 
-  (get-group [d group-id]
-    (let [result (run-query (:connection query-conf) (q/get-group group-id))]
-      (if (empty? result)
-        nil
-        {:id group-id
-         :name (:group-name (first result))
-         :members (vec (map :name result))})))
+;DeptStorage
+(declare dist-dept)
+(defn calculate-group-dept [db group-id]
+  (with-transaction
+    db
+    (fn [db-trans]
+      (let [get-total-per-user (fn [query]
+                                 (->> query
+                                      (run-query db-trans)
+                                      (reduce #(assoc %1 (:id %2) (:amount %2)) {})))
+            group-members (:members (get-group db-trans group-id))
+            users (into {} (map (fn [u] [(:id u) 0]) group-members))
+            user-expenses (get-total-per-user (q/get-sum-expenses group-id))
+            user-exp-share (get-total-per-user (q/get-sum-expense-shares group-id))
+            user-total (-> users
+                           ((partial merge-with -) user-exp-share)
+                           ((partial merge-with +) user-expenses))
+            loaners (->> user-total
+                         (filter #(< 0 (second %)))
+                         (sort-by second >))
+            filter-in-dept (comp (filter #(> 0 (second %)))
+                                 (map #(vector (first %) (* -1 (second %)))))
+            in-dept (->> user-total
+                         (into [] filter-in-dept)
+                         (sort-by second >))]
+        (dist-dept loaners in-dept)))))
 
-  (get-group-expenses [d group-id]
-    (run-query (:connection query-conf) (q/get-group-expenses group-id)))
+(defn- dist-dept [[l & loaners] [i & in-dept]]
+  (if (some nil? [l i])
+    []
+    (let [id first
+          amount second]
+      (case (compare (amount l) (amount i))
+        -1 (let [dept (- (amount i) (amount l))
+                 remainder [(id i) (- (amount i) dept)]]
+             (cons [(id i) (id l) dept]
+                   (dist-dept loaners (cons remainder in-dept))))
 
-  ExpenseStorage
-  (create-expense
-    [d group-id payed-by amount]
-    (create-expense d group-id payed-by amount (t/now)))
+        0 (cons [(id i) (id l) (amount l)] (dist-dept loaners in-dept))
 
-  (create-expense [d group-id payed-by amount date]
-    (first (insert!
-             (:connection query-conf)
-             :expenses {:payed-by payed-by
-                        :group-id group-id
-                        :amount amount
-                        :date (str date)})))
+        1 (let [dept (- (amount l) (amount i))
+                remainder [(id l) (- (amount l) dept)]]
+            (cons [(id i) (id l) (amount i)]
+                  (dist-dept (cons remainder  loaners) in-dept)))))))
 
-  (get-expense [d id]
-    (let [expense (first (run-query (:connection query-conf) (q/get-expense id)))]
-      (update expense :date #(f/parse date-format %))))
+(defn clear-dept [db group-id]
+  (delete! db :dept ["group_id = ?" group-id]))
 
-  DeptStorage
-  (create-dept [d user-name expense-id group-id amount]
-    (insert! (:connection query-conf)
-             :dept {:user-name user-name
-                    :expense-id expense-id
-                    :group-id group-id
-                    :amount amount}))
+(defn save-dept [db group-id dept]
+  (let [create-rows (comp (map #(zipmap [:from-user :to-user :amount] %))
+                          (map #(assoc % :group-id group-id)))]
+    (insert! db :dept (into [] create-rows dept))))
 
-  (get-user-dept [d user-name group-id]
-    (into {} (map (comp vec vals)
-                  (run-query (:connection query-conf) (q/get-user-with-dept user-name group-id))
-                  #_(get-user-with-dept-query {:user_name user-name
-                                             :group_id group-id}
-                                            query-conf))))
+(defn get-group-dept [db group-id]
+  (run-query db (q/get-group-dept group-id)))
 
-  (get-dept [d group-id owed-by owed-to]
-    (get (get-user-dept d owed-by group-id) owed-to))
+;ExpenseStorage
+(defn create-expense
+  ([db group-id payed-by shared-with amount]
+   (create-expense db group-id payed-by shared-with amount (t/now)))
 
-  (get-group-dept [d group-id]
-    (let [dept (run-query (:connection query-conf) (q/get-group-dept group-id))]
-      (->> dept
-           (map mk-dept-pair)
-           merge-dept-pairs
-           (filter #(not= (second %) 0.0))
-           (into {})))))
+  ([db group-id payed-by shared-with amount date]
+   (with-transaction
+     db
+     (fn [db-trans]
+       (let [share (/ (double amount) (count shared-with))
+             expense-id (first (insert! db-trans :expense
+                                        [{:user-id payed-by
+                                          :group-id group-id
+                                          :amount amount
+                                          :created (str date)}]))
+             share-rows (map (fn [user-id]
+                               {:expense-id expense-id
+                                :user-id user-id
+                                :group-id group-id
+                                :amount share})
+                             shared-with)]
+         (insert! db-trans :expense-share share-rows)
+         (clear-dept db-trans group-id)
+         (save-dept db-trans group-id (calculate-group-dept db-trans group-id))
+         expense-id)))))
 
-(defn- mk-dept-pair [{:keys [owed-by owed-to amount]}]
-  (let [pair-dept (if (< 0 (compare owed-by owed-to)) (* -1 amount) amount)]
-    [(sorted-set owed-by owed-to) pair-dept]))
+(defn get-expense [db id]
+  (let [expense (first (run-query db (q/get-expense id)))]
+    expense))
 
-(defn- merge-dept-pairs
-  "Merge dept pairs to get a sum of the dept between two users."
-  [pairs]
-  (let [f (fn [p [k v]] (update p k (fnil + 0) v))]
-    (reduce f {} pairs)))
+(defn get-expense-shares [db expense-id]
+  (run-query db (q/get-expense-shares expense-id)))
 
-(defn add-shared-expense
-  ([db group-id paying-user-name amount]
-   (add-shared-expense db group-id paying-user-name amount
-                       (:members (get-group db group-id))))
-  ([db group-id paying-user-name amount split-between]
-   (let [expense-id (create-expense db group-id paying-user-name amount)
-         user-dept (/ (double amount) (count split-between))]
-     (doseq [dept-user-name (remove #{paying-user-name} split-between)]
-       (create-dept db dept-user-name expense-id group-id user-dept))
-     expense-id)))
+(defn get-group-expenses [db group-id]
+  (run-query db (q/get-group-expenses group-id)))
+

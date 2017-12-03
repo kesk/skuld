@@ -21,7 +21,8 @@
                  [cljs-ajax "0.7.2"]
                  [ring-logger "0.7.7"]
                  [secretary "1.2.3"]
-                 [alumbra "0.2.6"]]
+                 [alumbra "0.2.6"]
+                 [org.clojure/core.match "0.3.0-alpha5"]]
   :bower-dependencies [[bootstrap "4.0.0-alpha.6"
                         font-awesome "4.7.0"]]
   :plugins [[lein-ring "0.12.1"]
