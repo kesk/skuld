@@ -2,7 +2,7 @@
   :description "Tool for keeping track of group depts."
   :license {:name "MIT License"
             :url "https://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.9.0-RC2"]
                  [ring/ring-core "1.6.2"]
                  [ring/ring-defaults "0.3.1"]
                  [ring/ring-jetty-adapter "1.6.2"]

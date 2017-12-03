@@ -4,6 +4,7 @@
             [clj-time.core :as t]
             [clj-time.format :as f]
             [clojure.java.jdbc :as jdbc]
+            [clojure.spec.alpha :as s]
             [environ.core :refer [env]]
             [skuld.common :refer [date-format]]
             [skuld.data.queries :as q]))
@@ -61,6 +62,14 @@
                  :name group-name}])
       (doseq [username (set users)] (create-user db username group-id))
       group-id)))
+
+(s/def ::user-id number?)
+(s/def ::user-name string?)
+(s/def ::group-id string?)
+(s/def ::group-name string?)
+(s/def ::group-member (s/keys :req [::user-id ::user-name]))
+(s/def ::group-members (s/coll-of ::group-member))
+(s/def ::group (s/keys :req [::group-id ::group-name ::group-members]))
 
 (defn get-group [db id]
   (let [group (first (run-query db (q/get-group id)))
