@@ -82,30 +82,23 @@
 
 ;DeptStorage
 (declare dist-dept)
+
+(defn get-user-totals [db group-id]
+  (->> (q/get-total-amount-per-user group-id)
+       (run-query db)
+       (reduce #(assoc %1 (:user-id %2) (:amount %2)) {})))
+
 (defn calculate-group-dept [db group-id]
-  (with-transaction
-    db
-    (fn [db-trans]
-      (let [get-total-per-user (fn [query]
-                                 (->> query
-                                      (run-query db-trans)
-                                      (reduce #(assoc %1 (:id %2) (:amount %2)) {})))
-            group-members (:members (get-group db-trans group-id))
-            users (into {} (map (fn [u] [(:id u) 0]) group-members))
-            user-expenses (get-total-per-user (q/get-sum-expenses group-id))
-            user-exp-share (get-total-per-user (q/get-sum-expense-shares group-id))
-            user-total (-> users
-                           ((partial merge-with -) user-exp-share)
-                           ((partial merge-with +) user-expenses))
-            loaners (->> user-total
-                         (filter #(< 0 (second %)))
-                         (sort-by second >))
-            filter-in-dept (comp (filter #(> 0 (second %)))
-                                 (map #(vector (first %) (* -1 (second %)))))
-            in-dept (->> user-total
-                         (into [] filter-in-dept)
-                         (sort-by second >))]
-        (dist-dept loaners in-dept)))))
+  (let [user-total (get-user-totals db group-id)
+        in-dept (->> user-total
+                     (filter #(< 0 (second %)))
+                     (sort-by second >))
+        filter-loaners (comp (filter #(> 0 (second %)))
+                             (map #(vector (first %) (* -1 (second %)))))
+        loaners (->> user-total
+                     (into [] filter-loaners)
+                     (sort-by second >))]
+    (dist-dept loaners in-dept)))
 
 (defn- dist-dept [[l & loaners] [i & in-dept]]
   (if (some nil? [l i])
@@ -158,13 +151,14 @@
                                 :amount share})
                              shared-with)]
          (insert! db-trans :expense-share share-rows)
+         ; Maybe use async channel to oupdate dept?
          (clear-dept db-trans group-id)
          (save-dept db-trans group-id (calculate-group-dept db-trans group-id))
          expense-id)))))
 
 (defn get-expense [db id]
   (let [expense (first (run-query db (q/get-expense id)))]
-    expense))
+    (update expense :created (partial f/parse date-format))))
 
 (defn get-expense-shares [db expense-id]
   (run-query db (q/get-expense-shares expense-id)))

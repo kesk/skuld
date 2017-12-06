@@ -67,3 +67,21 @@
 (defn get-group-dept [group-id]
   ["SELECT * FROM dept WHERE group_id = ?" group-id])
 
+(defn get-total-amount-per-user [group-id]
+  (let [expenses (long-str
+                   "SELECT user_id, sum(amount) * -1 AS amount"
+                   "FROM expense"
+                   "WHERE group_id = ?"
+                   "GROUP BY user_id")
+        expense-shares (long-str
+                         "SELECT user_id, sum(amount) AS amount"
+                         "FROM expense_share"
+                         "WHERE group_id = ?"
+                         "GROUP BY user_id")
+        union (long-str expenses "UNION ALL" expense-shares)]
+    [(long-str
+       "SELECT user_id, sum(amount) AS amount FROM"
+       "(" union ")"
+       "GROUP BY user_id")
+     group-id group-id]))
+
