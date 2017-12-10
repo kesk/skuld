@@ -80,14 +80,13 @@
        :name (:name group)
        :members members})))
 
-;DeptStorage
-(declare dist-dept)
-
+;Dept
 (defn get-user-totals [db group-id]
   (->> (q/get-total-amount-per-user group-id)
        (run-query db)
        (reduce #(assoc %1 (:user-id %2) (:amount %2)) {})))
 
+(declare dist-dept)
 (defn calculate-group-dept [db group-id]
   (let [user-total (get-user-totals db group-id)
         in-dept (->> user-total
@@ -95,28 +94,30 @@
                      (sort-by second >))
         filter-loaners (comp (filter #(> 0 (second %)))
                              (map #(vector (first %) (* -1 (second %)))))
-        loaners (->> user-total
+        lenders (->> user-total
                      (into [] filter-loaners)
                      (sort-by second >))]
-    (dist-dept loaners in-dept)))
+    (dist-dept lenders in-dept)))
 
-(defn- dist-dept [[l & loaners] [i & in-dept]]
-  (if (some nil? [l i])
-    []
-    (let [id first
-          amount second]
-      (case (compare (amount l) (amount i))
-        -1 (let [dept (- (amount i) (amount l))
-                 remainder [(id i) (- (amount i) dept)]]
-             (cons [(id i) (id l) dept]
-                   (dist-dept loaners (cons remainder in-dept))))
+(defn- dist-dept [lenders in-dept]
+  (loop [[l & ls] lenders
+         [i & is] in-dept
+         total []]
+    (if (some nil? [l i])
+      total
+      (let [id first
+            amount second]
+        (case (compare (amount l) (amount i))
+          -1 (let [dept (- (amount i) (amount l))
+                   remainder [(id i) (- (amount i) dept)]]
+               (recur ls (cons remainder is) (cons [(id i) (id l) dept] total)))
 
-        0 (cons [(id i) (id l) (amount l)] (dist-dept loaners in-dept))
+          0 (recur ls is (cons [(id i) (id l) (amount l)] total))
 
-        1 (let [dept (- (amount l) (amount i))
-                remainder [(id l) (- (amount l) dept)]]
-            (cons [(id i) (id l) (amount i)]
-                  (dist-dept (cons remainder  loaners) in-dept)))))))
+          1 (let [dept (- (amount l) (amount i))
+                  remainder [(id l) (- (amount l) dept)]]
+              (recur (cons remainder ls) is
+                     (cons [(id i) (id l) (amount i)] total))))))))
 
 (defn clear-dept [db group-id]
   (delete! db :dept ["group_id = ?" group-id]))
@@ -151,7 +152,6 @@
                                 :amount share})
                              shared-with)]
          (insert! db-trans :expense-share share-rows)
-         ; Maybe use async channel to oupdate dept?
          (clear-dept db-trans group-id)
          (save-dept db-trans group-id (calculate-group-dept db-trans group-id))
          expense-id)))))
