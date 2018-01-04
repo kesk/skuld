@@ -1,13 +1,12 @@
 (ns skuld.data-model
   (:require [camel-snake-kebab.core :refer [->kebab-case ->snake_case]]
             [camel-snake-kebab.extras :refer [transform-keys]]
-            [clj-time.core :as t]
-            [clj-time.format :as f]
             [clojure.java.jdbc :as jdbc]
             [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
             [environ.core :refer [env]]
-            [skuld.common :refer [date-format]]
-            [skuld.data.queries :as q]))
+            [skuld.data.queries :as q])
+  (:import [java.time Instant]))
 
 (def db-spec {:classname "org.sqlite.JDBC"
               :subprotocol "sqlite"
@@ -63,14 +62,6 @@
       (doseq [username (set users)] (create-user db username group-id))
       group-id)))
 
-(s/def ::user-id number?)
-(s/def ::user-name string?)
-(s/def ::group-id string?)
-(s/def ::group-name string?)
-(s/def ::group-member (s/keys :req [::user-id ::user-name]))
-(s/def ::group-members (s/coll-of ::group-member))
-(s/def ::group (s/keys :req [::group-id ::group-name ::group-members]))
-
 (defn get-group [db id]
   (let [group (first (run-query db (q/get-group id)))
         members (run-query db (q/get-group-members id))]
@@ -92,10 +83,10 @@
         in-dept (->> user-total
                      (filter #(< 0 (second %)))
                      (sort-by second >))
-        filter-loaners (comp (filter #(> 0 (second %)))
+        filter-lenders (comp (filter #(> 0 (second %)))
                              (map #(vector (first %) (* -1 (second %)))))
         lenders (->> user-total
-                     (into [] filter-loaners)
+                     (into [] filter-lenders)
                      (sort-by second >))]
     (dist-dept lenders in-dept)))
 
@@ -119,6 +110,16 @@
               (recur (cons remainder ls) is
                      (cons [(id i) (id l) (amount i)] total))))))))
 
+(s/fdef dist-dept
+        :args (s/cat :lenders (s/coll-of (s/coll-of number? :count 2))
+                     :in-dept (s/coll-of (s/coll-of number? :count 2)))
+
+        :ret (s/coll-of (s/coll-of number? :count 3))
+
+        :fn (fn [a] (= (->> a :ret (map #(get % 3)) (reduce +))
+                       (max (-> a :lenders (map second) (reduce +))
+                            (-> a :in-dept (map second) (reduce +))))))
+
 (defn clear-dept [db group-id]
   (delete! db :dept ["group_id = ?" group-id]))
 
@@ -133,7 +134,7 @@
 ;ExpenseStorage
 (defn create-expense
   ([db group-id payed-by shared-with amount]
-   (create-expense db group-id payed-by shared-with amount (t/now)))
+   (create-expense db group-id payed-by shared-with amount (Instant/now)))
 
   ([db group-id payed-by shared-with amount date]
    (with-transaction
@@ -152,13 +153,24 @@
                                 :amount share})
                              shared-with)]
          (insert! db-trans :expense-share share-rows)
-         (clear-dept db-trans group-id)
-         (save-dept db-trans group-id (calculate-group-dept db-trans group-id))
          expense-id)))))
+
+(s/fdef create-expense
+        :args (s/or :without-date (s/cat :db #(satisfies? Database %)
+                                         :group-id string?
+                                         :payed-by number?
+                                         :shared-with (s/coll-of number?)
+                                         :amount number?)
+                    :with-date (s/cat :db #(satisfies? Database %)
+                                      :group-id string?
+                                      :payed-by number?
+                                      :shared-with (s/coll-of number?)
+                                      :amount number?
+                                      :date inst?)))
 
 (defn get-expense [db id]
   (let [expense (first (run-query db (q/get-expense id)))]
-    (update expense :created (partial f/parse date-format))))
+    (update expense :created #(Instant/parse %))))
 
 (defn get-expense-shares [db expense-id]
   (run-query db (q/get-expense-shares expense-id)))
@@ -166,3 +178,4 @@
 (defn get-group-expenses [db group-id]
   (run-query db (q/get-group-expenses group-id)))
 
+(stest/instrument)

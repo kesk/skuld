@@ -8,11 +8,11 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.util.response :as response]
             [selmer.parser :as selmer]
-            [skuld.data-model :as data :refer [->Database]]
+            [skuld.data-model :as data :refer [map->SQLiteDatabase]]
             [skuld.rest-api :refer [api-handler]])
   (:gen-class))
 
-(def db (->Database data/query-conf))
+(def db (map->SQLiteDatabase data/db-spec))
 
 (defn handle-group-request
   [req]
@@ -35,7 +35,8 @@
   (POST "/groups" [] handle-group-request)
   (context "/api/v1" [] api-handler)
   (GET "/hello/:n" [n] (str "Hello " n "!"))
-  (route/resources "/"))
+  (route/resources "/")
+  (route/not-found "404"))
 
 (def ring-handler
   (-> app-routes

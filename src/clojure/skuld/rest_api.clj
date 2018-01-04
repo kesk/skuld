@@ -6,9 +6,11 @@
             [liberator.core :refer [defresource]]
             [liberator.dev :refer [wrap-trace]]
             [ring.util.response :as res]
-            [skuld.data-model :as groups]))
+            [skuld.data-model :as groups]
+            [clojure.tools.logging :as log]
+            ))
 
-(def database (groups/->Database groups/query-conf))
+(def database (groups/map->SQLiteDatabase groups/db-spec))
 
 (defresource groups-resource [db id]
   :available-media-types ["application/json"]
@@ -27,8 +29,10 @@
            (let [body (slurp (-> ctx :request :body))
                  data (json/read-str body :key-fn keyword)
                  group-id (get-in ctx [:request :params :id])
-                 id (groups/add-shared-expense db group-id (:payed-by data)
-                                               (:amount data) (:shared-with data))]
+                 id (groups/create-expense db group-id
+                                           (:payed-by data)
+                                           (:shared-with data)
+                                           (:amount data))]
              {::expense-id id})))
 
 (defresource dept-resource [db group-id]

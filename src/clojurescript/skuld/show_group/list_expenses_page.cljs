@@ -12,8 +12,8 @@
        [:th "Amount"]
        [:th "When"]]
       [:tbody
-       (for [{username :name, id :id, amount :amount, date :date} expenses]
-         (let [date-obj (js/Date. date)
+       (for [{username :name, id :id, amount :amount, created :created} expenses]
+         (let [date-obj (js/Date. created)
                date-str (.toLocaleDateString date-obj)
                time-str (.toLocaleTimeString date-obj)]
            ^{:key id}

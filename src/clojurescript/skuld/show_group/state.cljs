@@ -8,14 +8,16 @@
 (defn- event-handler [state [event-name value]]
   (case event-name
     :group-info (-> state
-                    (update :group-info merge (update value :members sort))
+                    (update :group-info merge (update value :members (partial sort :name)))
+                    (assoc-in [:group-info :member-id-map]
+                              (reduce (fn [acc v] (assoc acc (:id v) v)) {} (:members value)))
                     (assoc-in [:expense-form :shared-with]
-                              (into {} (map #(vec [% true]) (:members value))))
-                    (assoc-in [:expense-form :payed-by] (first (:members value))))
+                              (into {} (map vector (map :id (:members value)) (repeat true))))
+                    (assoc-in [:expense-form :payed-by] (-> value :members first :id)))
     :group-expenses (assoc state :group-expenses value)
     :shared-with (update-in state [:expense-form :shared-with value] not)
     :change-amount (assoc-in state [:expense-form :amount] value)
-    :change-payed-by (assoc-in state [:expense-form :payed-by] value)
+    :change-payed-by (assoc-in state [:expense-form :payed-by] (js/parseInt value))
     :change-page (assoc state :page value)
     :change-group-id (assoc-in state [:group-info :id] value)
     state))

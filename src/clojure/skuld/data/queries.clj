@@ -22,11 +22,11 @@
 
 (defn get-group-expenses [group-id]
   [(long-str
-     "SELECT e.id, e.user_id, u.name, e.group_id, e.amount"
+     "SELECT e.id, e.user_id, u.name, e.group_id, e.amount, e.created"
      "FROM expense e"
      "JOIN user u ON e.user_id = u.id"
-     "WHERE group_id = ?"
-     "ORDER BY date ASC")
+     "WHERE e.group_id = ?"
+     "ORDER BY e.created ASC")
    group-id])
 
 (defn get-sum-expenses [group-id]

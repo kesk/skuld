@@ -27,8 +27,8 @@
     [:div
      [:h1 (:name @app-state)]
      [:h2 "Members"]
-     [:ul (for [m (-> @app-state :group-info :members)]
-            ^{:key m} [:li m])]
+     [:ul (for [{id :id n :name} (-> @app-state :group-info :members)]
+            ^{:key id} [:li n])]
      [:p "Den här gruppen har spenderat totalt "
       [:span {:class "font-weight-bold"} total] " kr."]
      [:p>a {:href (str (current-url) "/expenses")} "Lista alla utgifter"]]))
@@ -49,6 +49,7 @@
 (def el-value #(-> % .-target .-value))
 
 (def is-float (comp not js/window.isNaN js/window.parseFloat))
+(def is-int (comp not js/window.isNaN js/window.parseInt))
 
 (defn amount-input []
   (let [amount (r/track #(-> @app-state :expense-form :amount))
@@ -68,11 +69,14 @@
       (update :shared-with #(->> %
                                  (filter (comp true? second))
                                  (map first)))
-      (update :amount js/window.parseFloat)))
+      (update :amount (comp js/parseFloat #(s/replace % #"," ".")))))
 
 (defn validate-form-data [data]
-  (and (is-float (:amount data))
-       (every? false? (map empty? (vals (select-keys data [:payed-by :shared-with]))))))
+  (every? true?
+          ((juxt (comp is-float :amount)
+                 (comp is-int :payed-by)
+                 (comp not empty? :shared-with))
+           data)))
 
 (defn log-error [error]
   (log (str "Error: " error)))
@@ -92,6 +96,7 @@
 
 (defn expense-form []
   (let [members (r/track #(-> @app-state :group-info :members))
+        member-id-map (r/track #(-> @app-state :group-info :member-id-map))
         shared-with (r/track #(-> @app-state :expense-form :shared-with))]
     (fn []
       [:div {:class "card"}
@@ -101,19 +106,21 @@
          [:label {:for "payed_by"} "Vem"]
          [:select#payed-by {:class "form-control"
                             :on-change #(dispatch! [:change-payed-by (el-value %)])}
-          (for [m @members] ^{:key m} [:option m])]]
+          (for [{n :name id :id} @members] ^{:key id} [:option {:value id} n])]]
         [amount-input]
         [:label "Delad med"]
         [:div {:class "form-group"}
-         (for [[n c] @shared-with]
-           ^{:key n} [:div {:class "form-check"}
-                      [:label {:class "form-check-label"}
-                       [:input {:class "form-check-input"
-                                :type "checkbox"
-                                :name "shared_with"
-                                :value n
-                                :on-change #(dispatch! [:shared-with (el-value %)])
-                                :checked c}] (str " " n)]])]
+         (let [member-id-map @member-id-map]
+           (for [[id is-checked] @shared-with]
+             ^{:key id} [:div {:class "form-check"}
+                         [:label {:class "form-check-label"}
+                          [:input {:class "form-check-input"
+                                   :type "checkbox"
+                                   :name "shared_with"
+                                   :value id
+                                   :on-change #(dispatch! [:shared-with id])
+                                   :checked is-checked}]
+                          (str " " (get-in member-id-map [id :name]))]]))]
         [:button#submit-expense {:class "btn btn-primary"
                                  :on-click submit-expense-form}
          "Add expense"]]])))
